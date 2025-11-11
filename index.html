@@ -3,72 +3,122 @@
 <head>
   <meta charset="UTF-8">
   <title>Mandarin Vocabulary</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    #search {
+      width: 100%;
+      padding: 12px 16px;
+      font-size: 16px;
+      margin-bottom: 20px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    li {
+      margin: 8px 0;
+    }
+  </style>
 </head>
+
 <body>
   <h1>我的汉语词汇表</h1>
+
+  <input id="search" placeholder="搜索词语 / pinyin / arti..." />
 
   <ul id="vocab-list"></ul>
 
   <script>
+    let vocabData = [];
+
+    // Ambil data dari vocab.json
     fetch('vocab.json')
       .then(response => response.json())
       .then(vocab => {
-        const list = document.getElementById('vocab-list');
-        vocab.forEach(item => {
-          const li = document.createElement('li');
-          li.textContent = `${item.chinese} — ${item.pinyin} — ${item.definition}`;
-          list.appendChild(li);
-        });
+        vocabData = vocab;
+        renderList(vocabData);
       });
+
+    // Fungsi untuk menampilkan daftar vocab
+    function renderList(data) {
+      const list = document.getElementById('vocab-list');
+      list.innerHTML = "";
+      data.forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = `${item.chinese} — ${item.pinyin} — ${item.definition}`;
+        list.appendChild(li);
+      });
+    }
+
+    // Search bar event
+    document.getElementById('search').addEventListener('input', function() {
+      const keyword = this.value.toLowerCase();
+
+      const filtered = vocabData.filter(item =>
+        item.chinese.includes(keyword) ||
+        item.pinyin.toLowerCase().includes(keyword) ||
+        item.definition.toLowerCase().includes(keyword)
+      );
+
+      renderList(filtered);
+    });
   </script>
-<script>
-async function loadVocab() {
-  const res = await fetch('vocab.json');
-  const data = await res.json();
-  renderList(data);
-  window.vocabData = data;
-}
 
-function renderList(data) {
-  const list = document.getElementById('vocab-list');
-  list.innerHTML = '';
-  data.forEach(item => {
-    const li = document.createElement('li');
-    li.textContent = `${item.chinese} — ${item.pinyin} — ${item.translate}`;
-    list.appendChild(li);
-  });
-}
+document.addEventListener("DOMContentLoaded", function () {
+    // Buat tombolnya
+    const btn = document.createElement("button");
+    btn.textContent = "Tambah Kata Baru";
+    btn.style.padding = "8px 14px";
+    btn.style.margin = "10px";
+    btn.style.cursor = "pointer";
 
-async function addNewWord() {
-  const chinese = prompt("汉字:");
-  const pinyin = prompt("拼音:");
-  const translate = prompt("Arti Indonesia:");
+    // Masukkan tombol ke body atau container lain
+    document.body.prepend(btn);
 
-  if (!chinese || !pinyin || !translate) return;
+    // Aksi saat tombol diklik
+    btn.addEventListener("click", function () {
+        const kata = prompt("Masukkan kata baru:");
+        if (!kata) return;
 
-  window.vocabData.push({
-    chinese,
-    pinyin,
-    translate
-  });
+        // Ambil daftar lama dari localStorage
+        const data = JSON.parse(localStorage.getItem("kosaKata") || "[]");
 
-  renderList(window.vocabData);
+        // Tambah kata baru
+        data.push(kata);
 
-  // upload manual: copy JSON ke vocab.json
-  alert("✅ Kata ditambahkan!\n\nSilakan copy JSON ini dan update vocab.json secara manual di GitHub:\n\n" + JSON.stringify(window.vocabData, null, 2));
-}
+        // Simpan lagi
+        localStorage.setItem("kosaKata", JSON.stringify(data));
 
-document.addEventListener("DOMContentLoaded", () => {
-  loadVocab();
+        // Tampilkan ke halaman (kalau ada kontainer list)
+        renderKosaKata(data);
+    });
 
-  const btn = document.createElement("button");
-  btn.textContent = "Tambah Kata Baru";
-  btn.style.fontSize = "16px";
-  btn.style.margin = "10px 0";
-  btn.onclick = addNewWord;
-
-  document.body.prepend(btn);
+    // Render awal
+    const saved = JSON.parse(localStorage.getItem("kosaKata") || "[]");
+    renderKosaKata(saved);
 });
-</script>
+
+// Fungsi render daftar
+function renderKosaKata(list) {
+    let container = document.getElementById("list-kata");
+    if (!container) {
+        // Kalau belum ada, buat otomatis
+        container = document.createElement("div");
+        container.id = "list-kata";
+        container.style.margin = "20px";
+        document.body.append(container);
+    }
+
+    container.innerHTML = "";
+    list.forEach(k => {
+        const item = document.createElement("div");
+        item.textContent = "• " + k;
+        container.appendChild(item);
+    });
+}
 </body>
 </html>
