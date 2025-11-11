@@ -1,1 +1,20 @@
-# vocab-mandarin
+# vocab-mandarin<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>Mandarin Vocabulary</title>
+</head>
+<body>
+  <h1>我的汉语词汇表</h1>
+  <ul id="vocab-list"></ul>
+  <script src="data/vocab.json"></script>
+  <script>
+    const list = document.getElementById('vocab-list');
+    vocab.forEach(item => {
+      const li = document.createElement('li');
+      li.textContent = `${item.chinese} — ${item.pinyin} — ${item.definition}`;
+      list.appendChild(li);
+    });
+  </script>
+</body>
+</html>
