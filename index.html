@@ -109,7 +109,22 @@
     { hanzi: "爱", pinyin: "ài", english: "love" },
     { hanzi: "吃", pinyin: "chī", english: "eat" },
     { hanzi: "看", pinyin: "kàn", english: "see" }
-  ];
+  ];async function loadVocab() {
+  const saved = localStorage.getItem("vocab");
+  if (saved) {
+    vocab = JSON.parse(saved);
+    renderTable();
+    return;
+  }
+
+  // kalau belum ada di localStorage, load dari vocab.json
+  const res = await fetch("vocab.json");
+  vocab = await res.json();
+  localStorage.setItem("vocab", JSON.stringify(vocab));
+  renderTable();
+}
+
+loadVocab();
 
   function renderTable() {
     const keyword = document.getElementById("search").value.toLowerCase();
