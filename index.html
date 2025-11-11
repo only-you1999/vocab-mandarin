@@ -28,6 +28,7 @@
   </style>
 </head>
 <body>
+  <scrip
   <h1>学习汉语词汇表</h1>
 
   <div class="grid">
@@ -267,7 +268,28 @@ document.addEventListener("DOMContentLoaded", loadVocab);
 
     // keyboard shortcut: Ctrl+S to save local
     window.addEventListener('keydown', (e)=>{ if((e.ctrlKey||e.metaKey) && e.key==='s'){ e.preventDefault(); saveToLocal(); } });
+  <script>// --- otomatis load vocab.json dari repo GitHub kamu ---
+const VOCAB_URL = "https://raw.githubusercontent.com/USERNAME/REPO/main/vocab.json"; // <== ganti USERNAME & REPO kamu
+
+async function loadVocab() {
+  try {
+    const res = await fetch(VOCAB_URL);
+    if (!res.ok) throw new Error("Gagal memuat vocab.json: " + res.status);
+    vocab = await res.json();
+    renderTable();
+    setStatus("✅ vocab.json berhasil dimuat dari GitHub");
+  } catch (e) {
+    console.error(e);
+    vocab = [];
+    renderTable();
+    setStatus("⚠️ Gagal memuat vocab.json, menggunakan data kosong.", true);
+  }
+}
+
+// otomatis jalankan saat halaman dibuka
+document.addEventListener("DOMContentLoaded", loadVocab);
   </script>
+    
 
   <footer style="margin-top:18px;color:#666;font-size:0.9rem">Petunjuk singkat: untuk menyimpan ke GitHub gunakan Personal Access Token (repo scope). Jika repo bersifat public dan Anda hanya ingin memuat file, isi Raw URL. Jangan pernah membagikan token secara publik.</footer>
 </body>
