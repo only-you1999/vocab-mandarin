@@ -1,0 +1,104 @@
+/* styles.css
+   Modern clean styling
+*/
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Noto+Sans+SC:wght@400;700&display=swap');
+
+:root{
+  --bg: #fbfcfd;
+  --card: #ffffff;
+  --muted: #69707a;
+  --accent: #2b6ef6;
+  --border: #e6e9ee;
+  --shadow: 0 6px 18px rgba(31,41,55,0.06);
+  --radius: 12px;
+  --maxw: 980px;
+}
+
+body{
+  margin:0;
+  background: #f8fafc;
+  font-family: "Inter","Noto Sans SC",sans-serif;
+  padding:40px 20px;
+  display:flex;
+  justify-content:center;
+}
+
+.container{
+  width:100%;
+  max-width:var(--maxw);
+}
+
+.topbar{
+  display:flex;
+  gap:16px;
+  align-items:center;
+}
+.btn{
+  border:1px solid var(--border);
+  padding:8px 14px;
+  border-radius:10px;
+  background:white;
+  cursor:pointer;
+  color:var(--accent);
+  font-weight:600;
+  transition:.2s;
+}
+.btn:hover{
+  background:#eef4ff;
+}
+
+.h-title{
+  font-size:28px;
+  font-weight:700;
+  margin:0;
+}
+
+.search{
+  width:100%;
+  padding:14px 16px;
+  margin:22px 0;
+  border-radius:10px;
+  border:1px solid var(--border);
+  box-shadow:var(--shadow);
+}
+
+.card{
+  padding:20px;
+  background:white;
+  border-radius:12px;
+  box-shadow:var(--shadow);
+}
+
+.vocab-list{
+  list-style:none;
+  padding:0;
+  margin:0;
+  display:grid;
+  gap:14px;
+}
+
+.vocab-item{
+  display:flex;
+  gap:14px;
+  padding:14px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  transition:.2s;
+}
+.vocab-item:hover{
+  background:#f1f6ff;
+  transform:translateY(-2px);
+}
+
+.chinese{
+  font-size:18px;
+  font-weight:700;
+}
+.pinyin{
+  font-size:14px;
+  color:var(--muted);
+}
+.definition{
+  margin-left:auto;
+  font-weight:500;
+}
