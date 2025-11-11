@@ -104,7 +104,7 @@
 </div>
 
 <script>
-  let vocab = [
+  let vocab = JSON.parse(localStorage.getItem("vocab")) || [ 
     { hanzi: "爱", pinyin: "ài", english: "love" },
     { hanzi: "吃", pinyin: "chī", english: "eat" },
     { hanzi: "看", pinyin: "kàn", english: "see" }
@@ -136,6 +136,7 @@
     if (!h || !p || !e) return alert("Please fill all fields.");
 
     vocab.push({ hanzi: h, pinyin: p, english: e });
+    localStorage.setItem("vocab", JSON.stringify(vocab));
 
     document.getElementById("hanziInput").value = "";
     document.getElementById("pinyinInput").value = "";
