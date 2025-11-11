@@ -1,22 +1,17 @@
 [
   {
-    "chinese": "电源适配器",
-    "pinyin": "diànyuán shìpèi qì",
-    "definition": "power adapter"
+    "mandarin": "你好",
+    "pinyin": "nǐ hǎo",
+    "indonesia": "halo"
   },
   {
-    "chinese": "接入交换机",
-    "pinyin": "jiērù jiāohuàn jī",
-    "definition": "access switch"
+    "mandarin": "谢谢",
+    "pinyin": "xièxie",
+    "indonesia": "terima kasih"
   },
   {
-    "chinese": "无线网桥",
-    "pinyin": "Wúxiàn wǎng qiáo",
-    "definition": "Radio power beam"
-    [
-  {"hanzi":"我","pinyin":"wǒ","arti":"saya"},
-  {"hanzi":"你","pinyin":"nǐ","arti":"kamu"},
-  {"hanzi":"好","pinyin":"hǎo","arti":"baik"},
-  {"hanzi":"谢谢","pinyin":"xièxie","arti":"terima kasih"}
+    "mandarin": "再见",
+    "pinyin": "zàijiàn",
+    "indonesia": "selamat tinggal"
+  }
 ]
-
