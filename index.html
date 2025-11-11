@@ -67,58 +67,5 @@
       renderList(filtered);
     });
   </script>
-
-document.addEventListener("DOMContentLoaded", function () {
-    // Buat tombolnya
-    const btn = document.createElement("button");
-    btn.textContent = "Tambah Kata Baru";
-    btn.style.padding = "8px 14px";
-    btn.style.margin = "10px";
-    btn.style.cursor = "pointer";
-
-    // Masukkan tombol ke body atau container lain
-    document.body.prepend(btn);
-
-    // Aksi saat tombol diklik
-    btn.addEventListener("click", function () {
-        const kata = prompt("Masukkan kata baru:");
-        if (!kata) return;
-
-        // Ambil daftar lama dari localStorage
-        const data = JSON.parse(localStorage.getItem("kosaKata") || "[]");
-
-        // Tambah kata baru
-        data.push(kata);
-
-        // Simpan lagi
-        localStorage.setItem("kosaKata", JSON.stringify(data));
-
-        // Tampilkan ke halaman (kalau ada kontainer list)
-        renderKosaKata(data);
-    });
-
-    // Render awal
-    const saved = JSON.parse(localStorage.getItem("kosaKata") || "[]");
-    renderKosaKata(saved);
-});
-
-// Fungsi render daftar
-function renderKosaKata(list) {
-    let container = document.getElementById("list-kata");
-    if (!container) {
-        // Kalau belum ada, buat otomatis
-        container = document.createElement("div");
-        container.id = "list-kata";
-        container.style.margin = "20px";
-        document.body.append(container);
-    }
-
-    container.innerHTML = "";
-    list.forEach(k => {
-        const item = document.createElement("div");
-        item.textContent = "• " + k;
-        container.appendChild(item);
-    });
-}
 </body>
 </html>
