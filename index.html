@@ -124,7 +124,11 @@
       )
       .forEach(v => {
         const row = document.createElement("tr");
-        row.innerHTML = `<td>${v.hanzi}</td><td>${v.pinyin}</td><td>${v.english}</td>`;
+        row.innerHTML =   <td>${v.hanzi}</td>
+    <td>${v.pinyin}</td>
+    <td>${v.english}</td>
+    <td><button onclick="startEdit('${v.hanzi}', '${v.pinyin}', '${v.english}')">Edit</button></td>
+  `;
         tbody.appendChild(row);
       });
   }
