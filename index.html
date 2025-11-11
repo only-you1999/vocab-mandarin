@@ -172,6 +172,19 @@ loadVocab();
   localStorage.setItem("vocab", JSON.stringify(vocab));
   renderTable();
 }
+<script>
+  const vocabUrl = "https://raw.githubusercontent.com/username/repo/main/vocab.json";
+
+    fetch(vocabUrl)
+      .then(res => res.json())
+      .then(data => {
+        const container = document.getElementById("vocab-container");
+        container.innerHTML = `
+          <h2>Loaded Vocabulary:</h2>
+          <pre>${JSON.stringify(data, null, 2)}</pre>
+        `;
+      })
+      .catch(err => console.error("Gagal memuat vocab.json:", err));
 </script>
 
 </body>
