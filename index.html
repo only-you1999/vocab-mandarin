@@ -3,131 +3,92 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>学习汉语词汇表 — Vocab Editor</title>
-  <style>
-    body{font-family:Inter, system-ui, -apple-system, Roboto, "Segoe UI", Arial; max-width:980px;margin:24px auto;padding:12px}
-    h1{font-size:1.6rem}
-    .grid{display:grid;grid-template-columns:1fr 320px;gap:18px}
-    .card{background:#fff;border:1px solid #e6e6e6;border-radius:8px;padding:12px;box-shadow:0 6px 18px rgba(0,0,0,0.03)}
-    table{width:100%;border-collapse:collapse}
-    th,td{padding:8px;border-bottom:1px solid #eee;text-align:left}
-    th{background:#fafafa}
-    input,textarea,select,button{font:inherit;padding:8px;border:1px solid #ddd;border-radius:6px}
-    .muted{color:#666;font-size:0.9rem}
-    .row{display:flex;gap:8px}
-    .controls{display:flex;gap:8px;flex-wrap:wrap}
-    .small{font-size:0.9rem;padding:6px}
-    .danger{background:#ffecec;border-color:#ffbcbc}
-    .success{background:#ecffef;border-color:#bff0c7}
-    .flex{display:flex;gap:8px;align-items:center}
-    .grow{flex:1}
-    .note{font-size:0.85rem;color:#444;margin-top:8px}
-    .hidden{display:none}
-    .btn-primary{background:#0b6efd;color:white;border:none}
-    .btn-ghost{background:transparent;border:1px solid #ddd}
-  </style>
+  <title>Kamus Mandarin Pribadi</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <scrip
-  <h1>学习汉语词汇表</h1>
+  <main class="container">
+    <h1>Kamus Mandarin Pribadi</h1>
+    <p class="muted">Hanzi / Pinyin / Arti. Data berasal dari <code>vocab.json</code> di repo. Tambah, edit, hapus. Simpan ke LocalStorage atau (opsional) ke GitHub.</p>
 
-  <div class="grid">
-    <div class="card">
-      <div class="controls">
-        <input id="filter" placeholder="Cari hanzi, pinyin, arti..." class="grow" />
-        <button id="btnClearFilter" class="small btn-ghost">Clear</button>
-      </div>
-
-      <table id="vocabTable">
-        <thead>
-          <tr><th>Hanzi</th><th>Pinyin</th><th>Arti</th><th style="width:120px">Aksi</th></tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-
-      <h3>Tambah Kosakata</h3>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:start">
-        <input id="newHanzi" placeholder="Hanzi (e.g. 我)" />
-        <input id="newPinyin" placeholder="Pinyin (e.g. wǒ)" />
-        <textarea id="newArti" placeholder="Arti (mis. saya)" style="grid-column:1/3;height:70px"></textarea>
-        <div class="row" style="grid-column:1/3;justify-content:flex-end">
-          <button id="btnAdd" class="small btn-primary">Tambah</button>
-          <button id="btnLoadSample" class="small btn-ghost">Isi contoh</button>
+    <section class="grid">
+      <div class="card">
+        <div class="controls">
+          <input id="filter" placeholder="Cari hanzi, pinyin, arti..." />
+          <button id="btnClearFilter" class="btn-ghost small">Clear</button>
         </div>
+
+        <table id="vocabTable">
+          <thead>
+            <tr><th>Hanzi</th><th>Pinyin</th><th>Arti</th><th style="width:120px">Aksi</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+
+        <h3>Tambah Kosakata</h3>
+        <div class="form-grid">
+          <input id="newHanzi" placeholder="Hanzi (mis: 我)" />
+          <input id="newPinyin" placeholder="Pinyin (mis: wǒ)" />
+          <textarea id="newArti" placeholder="Arti (mis: saya)" rows="3"></textarea>
+          <div class="row actions">
+            <button id="btnAdd" class="btn-primary small">Tambah</button>
+            <button id="btnLoadSample" class="btn-ghost small">Isi contoh</button>
+          </div>
+        </div>
+
+        <p class="note">Klik <em>Edit</em> pada baris untuk ubah (dialog). Simpan ke LocalStorage agar perubahan tersimpan pada browser.</p>
       </div>
 
-      <p class="note">Tip: klik <em>edit</em> pada baris untuk ubah. Perubahan otomatis tersimpan di memori halaman — gunakan tombol simpan untuk menyimpan ke GitHub atau ke LocalStorage.</p>
-    </div>
+      <div class="card">
+        <h3>Pengaturan Penyimpanan</h3>
+        <p class="muted">Muat dari repo: masukkan raw URL atau owner/repo/path di bawah. Untuk menyimpan otomatis ke GitHub, perlu Personal Access Token (PASTI HATI-HATI — jangan publikasikan token).</p>
 
-    <div class="card">
-      <h3>Pengaturan Penyimpanan</h3>
-      <p class="muted">Mode A: <strong>GitHub (recommended untuk file repo)</strong>. Anda butuh Personal Access Token (repo scope) — jangan bagikan token. Mode B: <strong>Local (tidak publik)</strong>.</p>
+        <label class="muted">Raw URL (contoh: https://raw.githubusercontent.com/USERNAME/REPO/main/vocab.json)</label>
+        <input id="rawUrl" placeholder="https://raw.githubusercontent.com/..." />
 
-      <div style="display:grid;gap:8px">
-        <label class="muted">Raw URL (jika file <code>vocab.json</code> tersedia public, contoh: <code>https://raw.githubusercontent.com/username/repo/branch/vocab.json</code>)</label>
-        <input id="rawUrl" placeholder="https://raw.githubusercontent.com/.../vocab.json" />
-
-        <label class="muted">Atau: Owner / Repo / Path (untuk menyimpan via GitHub API)</label>
+        <label class="muted">Owner / Repo / Path / Branch</label>
         <input id="ghOwner" placeholder="owner (username atau org)" />
         <input id="ghRepo" placeholder="repo (nama repo)" />
         <input id="ghPath" placeholder="path (mis. vocab.json)" />
         <input id="ghBranch" placeholder="branch (default: main)" />
-        <textarea id="ghToken" placeholder="Personal access token (pakai token minimal scope: repo). Simpan secara privat."></textarea>
+        <textarea id="ghToken" placeholder="Personal access token (opsional untuk menyimpan)"></textarea>
 
         <div class="row">
-          <button id="btnLoad" class="small btn-primary">Muat Data</button>
-          <button id="btnSaveGit" class="small btn-ghost">Simpan ke GitHub</button>
-          <button id="btnSaveLocal" class="small btn-ghost">Simpan ke LocalStorage</button>
+          <button id="btnLoad" class="btn-primary small">Muat Data</button>
+          <button id="btnSaveGit" class="btn-ghost small">Simpan ke GitHub</button>
+          <button id="btnSaveLocal" class="btn-ghost small">Simpan ke Local</button>
         </div>
 
         <div id="status" class="note">Status: siap</div>
-      </div>
 
-      <hr />
-      <h4>Preview / Raw</h4>
-      <pre id="rawPreview" style="max-height:220px;overflow:auto;background:#fafafa;padding:8px;border-radius:6px"></pre>
-    </div>
-  </div>
+        <hr />
+        <h4>Preview / Raw</h4>
+        <pre id="rawPreview" class="rawbox"></pre>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">Petunjuk: Jika ingin menyimpan ke repo secara otomatis, buat Personal Access Token dengan scope <code>repo</code>. Jangan share token.</footer>
 
   <script>
-    // --- otomatis load vocab.json dari repo GitHub kamu ---
-const VOCAB_URL = "https://raw.githubusercontent.com/USERNAME/REPO/main/vocab.json"; // <== ganti USERNAME & REPO kamu
-
-async function loadVocab() {
-  try {
-    const res = await fetch(VOCAB_URL);
-    if (!res.ok) throw new Error("Gagal memuat vocab.json: " + res.status);
-    vocab = await res.json();
-    renderTable();
-    setStatus("✅ vocab.json berhasil dimuat dari GitHub");
-  } catch (e) {
-    console.error(e);
-    vocab = [];
-    renderTable();
-    setStatus("⚠️ Gagal memuat vocab.json, menggunakan data kosong.", true);
-  }
-}
-
-// otomatis jalankan saat halaman dibuka
-document.addEventListener("DOMContentLoaded", loadVocab);
-
-    // ----- Data model -----
+    // Data model
     let vocab = [];
     const localKey = 'vocab-local-json';
 
-    // ----- Helpers -----
+    // Helpers
     function utf8_to_b64(str){ return btoa(unescape(encodeURIComponent(str))); }
     function b64_to_utf8(b64){ return decodeURIComponent(escape(atob(b64))); }
+    function setStatus(msg, isError){ const el = document.getElementById('status'); el.textContent = 'Status: '+msg; el.style.background = isError ? '#ffecec' : '#ecffef'; setTimeout(()=>{el.style.background='transparent'},4000); }
 
-    function setStatus(msg, isError){ const el = document.getElementById('status'); el.textContent = 'Status: '+msg; el.className = isError? 'note danger':'note success'; setTimeout(()=>{el.className='note'},4000); }
+    function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
     function renderTable(){
       const tbody = document.querySelector('#vocabTable tbody'); tbody.innerHTML='';
       const q = document.getElementById('filter').value.trim().toLowerCase();
       vocab.forEach((item, idx)=>{
+        const matches = !q || [item.hanzi||'', item.pinyin||'', item.arti||''].join(' ').toLowerCase().includes(q);
         const row = document.createElement('tr');
-        const matches = !q || [item.hanzi || '', item.pinyin || '', item.arti || ''].join(' ').toLowerCase().includes(q);
-        if(!matches){ row.style.display='none'; }
+        if(!matches) row.style.display='none';
         row.innerHTML = `
           <td><span class="val-hanzi">${escapeHtml(item.hanzi||'')}</span></td>
           <td><span class="val-pinyin">${escapeHtml(item.pinyin||'')}</span></td>
@@ -144,28 +105,22 @@ document.addEventListener("DOMContentLoaded", loadVocab);
       document.getElementById('rawPreview').textContent = JSON.stringify(vocab, null, 2);
     }
 
-    function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
     function attachRowHandlers(){
       document.querySelectorAll('.del').forEach(btn=>btn.onclick=()=>{
         const i=+btn.dataset.idx; if(!confirm('Hapus kata ini?')) return; vocab.splice(i,1); renderTable(); setStatus('hapus sukses');
       });
-      document.querySelectorAll('.edit').forEach(btn=>btn.onclick=()=>{
-        const i=+btn.dataset.idx; openEditDialog(i);
-      });
+      document.querySelectorAll('.edit').forEach(btn=>btn.onclick=()=>{ openEditDialog(+btn.dataset.idx); });
     }
 
     function openEditDialog(i){
       const item = vocab[i];
-      // simple prompt-based edit for single-file simplicity
-      const hanzi = prompt('Hanzi:', item.hanzi||'');
-      if(hanzi===null) return;
+      const hanzi = prompt('Hanzi:', item.hanzi||''); if(hanzi===null) return;
       const pinyin = prompt('Pinyin:', item.pinyin||''); if(pinyin===null) return;
       const arti = prompt('Arti:', item.arti||''); if(arti===null) return;
       vocab[i] = {hanzi:hanzi.trim(), pinyin:pinyin.trim(), arti:arti.trim()}; renderTable(); setStatus('edit tersimpan (memori)');
     }
 
-    // ----- CRUD UI -----
+    // CRUD UI
     document.getElementById('btnAdd').onclick = ()=>{
       const h = document.getElementById('newHanzi').value.trim();
       const p = document.getElementById('newPinyin').value.trim();
@@ -175,7 +130,6 @@ document.addEventListener("DOMContentLoaded", loadVocab);
       document.getElementById('newHanzi').value=''; document.getElementById('newPinyin').value=''; document.getElementById('newArti').value='';
       renderTable(); setStatus('kata ditambahkan (memori)');
     };
-
     document.getElementById('btnLoadSample').onclick = ()=>{
       vocab = [
         {hanzi:'我',pinyin:'wǒ',arti:'saya'},
@@ -184,14 +138,14 @@ document.addEventListener("DOMContentLoaded", loadVocab);
         {hanzi:'谢谢',pinyin:'xièxie',arti:'terima kasih'},
       ]; renderTable(); setStatus('sample dimuat');
     };
-
     document.getElementById('filter').oninput = renderTable;
-    document.getElementById('btnClearFilter').onclick = ()=>{document.getElementById('filter').value=''; renderTable();}
+    document.getElementById('btnClearFilter').onclick = ()=>{ document.getElementById('filter').value=''; renderTable(); }
 
-    // ----- Load / Save -----
+    // Load/Save
     async function loadFromRawUrl(url){
       setStatus('memuat dari raw URL...');
-      const r = await fetch(url); if(!r.ok) throw new Error('Failed to load raw URL: '+r.status);
+      const r = await fetch(url);
+      if(!r.ok) throw new Error('Failed to load raw URL: '+r.status);
       const txt = await r.text(); vocab = JSON.parse(txt); renderTable(); setStatus('dimuat dari raw URL');
     }
 
@@ -207,11 +161,9 @@ document.addEventListener("DOMContentLoaded", loadVocab);
       if(!token) throw new Error('Token dibutuhkan untuk menyimpan ke GitHub');
       setStatus('mempersiapkan commit...');
       const getApi = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}${branch?('?ref='+encodeURIComponent(branch)):''}`;
-      // 1) get existing sha if file exists
       const head = await fetch(getApi, {headers:{Authorization:'token '+token}});
       let sha = null;
       if(head.ok){ const meta = await head.json(); sha = meta.sha; }
-      // 2) put new content
       const body = {
         message: `Update vocab.json via web editor @ ${new Date().toISOString()}`,
         content: utf8_to_b64(JSON.stringify(vocab, null, 2)),
@@ -219,14 +171,14 @@ document.addEventListener("DOMContentLoaded", loadVocab);
       if(branch) body.branch = branch;
       if(sha) body.sha = sha;
       const put = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}`, {method:'PUT', headers:{Authorization:'token '+token, 'Content-Type':'application/json'}, body: JSON.stringify(body)});
-      if(!put.ok){ const txt = await put.text(); throw new Error('GitHub PUT failed: '+put.status+'\n'+txt); }
+      if(!put.ok){ const txt = await put.text(); throw new Error('GitHub PUT failed: '+put.status+'\\n'+txt); }
       setStatus('tersimpan ke GitHub');
     }
 
     function saveToLocal(){ localStorage.setItem(localKey, JSON.stringify(vocab)); setStatus('tersimpan ke LocalStorage'); }
     function loadFromLocal(){ const s=localStorage.getItem(localKey); if(!s) throw new Error('tidak ada data local'); vocab = JSON.parse(s); renderTable(); setStatus('dimuat dari LocalStorage'); }
 
-    // ----- Buttons -----
+    // Buttons
     document.getElementById('btnLoad').onclick = async ()=>{
       try{
         const raw = document.getElementById('rawUrl').value.trim();
@@ -237,7 +189,6 @@ document.addEventListener("DOMContentLoaded", loadVocab);
         const branch=document.getElementById('ghBranch').value.trim();
         const token=document.getElementById('ghToken').value.trim();
         if(owner && repo && path){ await loadFromGitHubAPI(owner, repo, path, branch, token||null); return; }
-        // fallback local
         await loadFromLocal();
       }catch(e){ setStatus('error: '+e.message, true); console.error(e); alert('Gagal memuat: '+e.message); }
     };
@@ -256,41 +207,16 @@ document.addEventListener("DOMContentLoaded", loadVocab);
 
     document.getElementById('btnSaveLocal').onclick = ()=>{ saveToLocal(); };
 
-    // ----- Init: try load local if present -----
+    // Init: try load local else empty
     (function(){
       const s = localStorage.getItem(localKey);
-      if(s){ try{ vocab = JSON.parse(s); renderTable(); setStatus('data local ditemukan'); return; }catch(_){}
-      }
-      // start empty
+      if(s){ try{ vocab = JSON.parse(s); renderTable(); setStatus('data local ditemukan'); return; }catch(_){} }
       vocab = [];
       renderTable();
     })();
 
-    // keyboard shortcut: Ctrl+S to save local
+    // Ctrl/Cmd+S shortcut to save local
     window.addEventListener('keydown', (e)=>{ if((e.ctrlKey||e.metaKey) && e.key==='s'){ e.preventDefault(); saveToLocal(); } });
-  <script>// --- otomatis load vocab.json dari repo GitHub kamu ---
-const VOCAB_URL = "https://github.com/only-you1999/vocab-mandarin/blob/main/vocab.json"; // <== ganti USERNAME & REPO kamu
-
-async function loadVocab() {
-  try {
-    const res = await fetch(VOCAB_URL);
-    if (!res.ok) throw new Error("Gagal memuat vocab.json: " + res.status);
-    vocab = await res.json();
-    renderTable();
-    setStatus("✅ vocab.json berhasil dimuat dari GitHub");
-  } catch (e) {
-    console.error(e);
-    vocab = [];
-    renderTable();
-    setStatus("⚠️ Gagal memuat vocab.json, menggunakan data kosong.", true);
-  }
-}
-
-// otomatis jalankan saat halaman dibuka
-document.addEventListener("DOMContentLoaded", loadVocab);
   </script>
-    
-
-  <footer style="margin-top:18px;color:#666;font-size:0.9rem">Petunjuk singkat: untuk menyimpan ke GitHub gunakan Personal Access Token (repo scope). Jika repo bersifat public dan Anda hanya ingin memuat file, isi Raw URL. Jangan pernah membagikan token secara publik.</footer>
 </body>
 </html>
