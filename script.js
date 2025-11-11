@@ -1,33 +1,30 @@
+let dictionary = [];
+
 async function loadDictionary() {
   const res = await fetch('data.json');
-  return await res.json();
+  dictionary = await res.json();
+  showResults(dictionary); // tampilkan semua saat halaman dibuka
 }
 
-document.getElementById('searchInput').addEventListener('input', async function() {
-  const query = this.value.trim().toLowerCase();
-  const dict = await loadDictionary();
+function showResults(list) {
   const resultDiv = document.getElementById('result');
+  resultDiv.innerHTML = list.map(entry => `
+    <div class="entry">
+      <strong>${entry.mandarin}</strong> (${entry.pinyin})<br>
+      ${entry.indonesia}
+    </div>
+    <hr>
+  `).join('');
+}
 
-  if (!query) {
-    resultDiv.innerHTML = '';
-    return;
-  }
-
-  const found = dict.filter(entry =>
+document.getElementById('searchInput').addEventListener('input', function() {
+  const query = this.value.trim().toLowerCase();
+  const filtered = dictionary.filter(entry =>
     entry.indonesia.toLowerCase().includes(query) ||
     entry.mandarin.toLowerCase().includes(query) ||
     entry.pinyin.toLowerCase().includes(query)
   );
-
-  if (found.length === 0) {
-    resultDiv.innerHTML = '<p>Tidak ditemukan.</p>';
-  } else {
-    resultDiv.innerHTML = found.map(entry => `
-      <div class="entry">
-        <strong>${entry.mandarin}</strong> (${entry.pinyin})<br>
-        ${entry.indonesia}
-      </div>
-      <hr>
-    `).join('');
-  }
+  showResults(filtered);
 });
+
+window.onload = loadDictionary;
