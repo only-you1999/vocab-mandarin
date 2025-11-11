@@ -89,6 +89,27 @@
   </div>
 
   <script>
+    // --- otomatis load vocab.json dari repo GitHub kamu ---
+const VOCAB_URL = "https://raw.githubusercontent.com/USERNAME/REPO/main/vocab.json"; // <== ganti USERNAME & REPO kamu
+
+async function loadVocab() {
+  try {
+    const res = await fetch(VOCAB_URL);
+    if (!res.ok) throw new Error("Gagal memuat vocab.json: " + res.status);
+    vocab = await res.json();
+    renderTable();
+    setStatus("✅ vocab.json berhasil dimuat dari GitHub");
+  } catch (e) {
+    console.error(e);
+    vocab = [];
+    renderTable();
+    setStatus("⚠️ Gagal memuat vocab.json, menggunakan data kosong.", true);
+  }
+}
+
+// otomatis jalankan saat halaman dibuka
+document.addEventListener("DOMContentLoaded", loadVocab);
+
     // ----- Data model -----
     let vocab = [];
     const localKey = 'vocab-local-json';
