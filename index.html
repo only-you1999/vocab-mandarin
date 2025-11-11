@@ -1,222 +1,284 @@
-<!doctype html>
-<html lang="id">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Kamus Mandarin Pribadi</title>
-  <link rel="stylesheet" href="styles.css" />
-</head>
-<body>
-  <main class="container">
-    <h1>Kamus Mandarin Pribadi</h1>
-    <p class="muted">Hanzi / Pinyin / Arti. Data berasal dari <code>vocab.json</code> di repo. Tambah, edit, hapus. Simpan ke LocalStorage atau (opsional) ke GitHub.</p>
+/*
+Mandarin Vocab — Single-file React app (App.jsx)
 
-    <section class="grid">
-      <div class="card">
-        <div class="controls">
-          <input id="filter" placeholder="Cari hanzi, pinyin, arti..." />
-          <button id="btnClearFilter" class="btn-ghost small">Clear</button>
-        </div>
+Features:
+- Add / Edit / Delete vocabulary entries
+- Categories (IT, GA, Safety) and custom categories
+- Search and filter by category / pinyin / Chinese / Indonesian
+- Persistent storage using localForage (IndexedDB) — permanent across refreshes
+- Import / Export JSON backup
+- Responsive, aesthetic Tailwind UI
 
-        <table id="vocabTable">
-          <thead>
-            <tr><th>Hanzi</th><th>Pinyin</th><th>Arti</th><th style="width:120px">Aksi</th></tr>
-          </thead>
-          <tbody></tbody>
-        </table>
+Setup (quick):
+1. Create a new Vite React project (recommended):
+   npm create vite@latest mandarin-vocab -- --template react
+   cd mandarin-vocab
+2. Install dependencies:
+   npm install localforage
+   npm install -D tailwindcss postcss autoprefixer
+   npx tailwindcss init -p
+   // configure Tailwind per docs (add content paths)
+3. Replace src/App.jsx with this file. Add Tailwind directives to src/index.css.
+4. Build & deploy to GitHub Pages (use gh-pages or GitHub Actions). See chat for short deploy steps.
 
-        <h3>Tambah Kosakata</h3>
-        <div class="form-grid">
-          <input id="newHanzi" placeholder="Hanzi (mis: 我)" />
-          <input id="newPinyin" placeholder="Pinyin (mis: wǒ)" />
-          <textarea id="newArti" placeholder="Arti (mis: saya)" rows="3"></textarea>
-          <div class="row actions">
-            <button id="btnAdd" class="btn-primary small">Tambah</button>
-            <button id="btnLoadSample" class="btn-ghost small">Isi contoh</button>
-          </div>
-        </div>
+Notes:
+- This single-file component is meant to be placed in src/App.jsx in a Vite/CRA React app.
+- All visuals use Tailwind classes; tweak the theme in tailwind.config.js for color palettes.
+*/
 
-        <p class="note">Klik <em>Edit</em> pada baris untuk ubah (dialog). Simpan ke LocalStorage agar perubahan tersimpan pada browser.</p>
-      </div>
+import React, { useEffect, useMemo, useState } from 'react';
+import localforage from 'localforage';
 
-      <div class="card">
-        <h3>Pengaturan Penyimpanan</h3>
-        <p class="muted">Muat dari repo: masukkan raw URL atau owner/repo/path di bawah. Untuk menyimpan otomatis ke GitHub, perlu Personal Access Token (PASTI HATI-HATI — jangan publikasikan token).</p>
+// initialize localforage store
+localforage.config({ name: 'mandarin-vocab', storeName: 'vocab_store' });
 
-        <label class="muted">Raw URL (contoh: https://raw.githubusercontent.com/USERNAME/REPO/main/vocab.json)</label>
-        <input id="rawUrl" placeholder="https://raw.githubusercontent.com/..." />
+const DEFAULT_CATEGORIES = ['IT', 'GA', 'Safety'];
 
-        <label class="muted">Owner / Repo / Path / Branch</label>
-        <input id="ghOwner" placeholder="owner (username atau org)" />
-        <input id="ghRepo" placeholder="repo (nama repo)" />
-        <input id="ghPath" placeholder="path (mis. vocab.json)" />
-        <input id="ghBranch" placeholder="branch (default: main)" />
-        <textarea id="ghToken" placeholder="Personal access token (opsional untuk menyimpan)"></textarea>
+function uid() {
+  return Math.random().toString(36).slice(2, 9);
+}
 
-        <div class="row">
-          <button id="btnLoad" class="btn-primary small">Muat Data</button>
-          <button id="btnSaveGit" class="btn-ghost small">Simpan ke GitHub</button>
-          <button id="btnSaveLocal" class="btn-ghost small">Simpan ke Local</button>
-        </div>
+export default function App() {
+  const [items, setItems] = useState([]);
+  const [query, setQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('All');
+  const [editing, setEditing] = useState(null);
+  const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
+  const [form, setForm] = useState({ chinese: '', pinyin: '', indo: '', category: 'IT', note: '' });
+  const [showForm, setShowForm] = useState(false);
+  const [sortBy, setSortBy] = useState('recent');
 
-        <div id="status" class="note">Status: siap</div>
-
-        <hr />
-        <h4>Preview / Raw</h4>
-        <pre id="rawPreview" class="rawbox"></pre>
-      </div>
-    </section>
-  </main>
-
-  <footer class="footer">Petunjuk: Jika ingin menyimpan ke repo secara otomatis, buat Personal Access Token dengan scope <code>repo</code>. Jangan share token.</footer>
-
-  <script>
-    // Data model
-    let vocab = [];
-    const localKey = 'vocab-local-json';
-
-    // Helpers
-    function utf8_to_b64(str){ return btoa(unescape(encodeURIComponent(str))); }
-    function b64_to_utf8(b64){ return decodeURIComponent(escape(atob(b64))); }
-    function setStatus(msg, isError){ const el = document.getElementById('status'); el.textContent = 'Status: '+msg; el.style.background = isError ? '#ffecec' : '#ecffef'; setTimeout(()=>{el.style.background='transparent'},4000); }
-
-    function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-    function renderTable(){
-      const tbody = document.querySelector('#vocabTable tbody'); tbody.innerHTML='';
-      const q = document.getElementById('filter').value.trim().toLowerCase();
-      vocab.forEach((item, idx)=>{
-        const matches = !q || [item.hanzi||'', item.pinyin||'', item.arti||''].join(' ').toLowerCase().includes(q);
-        const row = document.createElement('tr');
-        if(!matches) row.style.display='none';
-        row.innerHTML = `
-          <td><span class="val-hanzi">${escapeHtml(item.hanzi||'')}</span></td>
-          <td><span class="val-pinyin">${escapeHtml(item.pinyin||'')}</span></td>
-          <td><span class="val-arti">${escapeHtml(item.arti||'')}</span></td>
-          <td>
-            <div class="row">
-              <button data-idx="${idx}" class="edit small btn-ghost">Edit</button>
-              <button data-idx="${idx}" class="del small btn-ghost">Hapus</button>
-            </div>
-          </td>`;
-        tbody.appendChild(row);
-      });
-      attachRowHandlers();
-      document.getElementById('rawPreview').textContent = JSON.stringify(vocab, null, 2);
-    }
-
-    function attachRowHandlers(){
-      document.querySelectorAll('.del').forEach(btn=>btn.onclick=()=>{
-        const i=+btn.dataset.idx; if(!confirm('Hapus kata ini?')) return; vocab.splice(i,1); renderTable(); setStatus('hapus sukses');
-      });
-      document.querySelectorAll('.edit').forEach(btn=>btn.onclick=()=>{ openEditDialog(+btn.dataset.idx); });
-    }
-
-    function openEditDialog(i){
-      const item = vocab[i];
-      const hanzi = prompt('Hanzi:', item.hanzi||''); if(hanzi===null) return;
-      const pinyin = prompt('Pinyin:', item.pinyin||''); if(pinyin===null) return;
-      const arti = prompt('Arti:', item.arti||''); if(arti===null) return;
-      vocab[i] = {hanzi:hanzi.trim(), pinyin:pinyin.trim(), arti:arti.trim()}; renderTable(); setStatus('edit tersimpan (memori)');
-    }
-
-    // CRUD UI
-    document.getElementById('btnAdd').onclick = ()=>{
-      const h = document.getElementById('newHanzi').value.trim();
-      const p = document.getElementById('newPinyin').value.trim();
-      const a = document.getElementById('newArti').value.trim();
-      if(!h){ alert('Hanzi tidak boleh kosong'); return; }
-      vocab.push({hanzi:h,pinyin:p,arti:a});
-      document.getElementById('newHanzi').value=''; document.getElementById('newPinyin').value=''; document.getElementById('newArti').value='';
-      renderTable(); setStatus('kata ditambahkan (memori)');
-    };
-    document.getElementById('btnLoadSample').onclick = ()=>{
-      vocab = [
-        {hanzi:'我',pinyin:'wǒ',arti:'saya'},
-        {hanzi:'你',pinyin:'nǐ',arti:'kamu'},
-        {hanzi:'好',pinyin:'hǎo',arti:'baik'},
-        {hanzi:'谢谢',pinyin:'xièxie',arti:'terima kasih'},
-      ]; renderTable(); setStatus('sample dimuat');
-    };
-    document.getElementById('filter').oninput = renderTable;
-    document.getElementById('btnClearFilter').onclick = ()=>{ document.getElementById('filter').value=''; renderTable(); }
-
-    // Load/Save
-    async function loadFromRawUrl(url){
-      setStatus('memuat dari raw URL...');
-      const r = await fetch(url);
-      if(!r.ok) throw new Error('Failed to load raw URL: '+r.status);
-      const txt = await r.text(); vocab = JSON.parse(txt); renderTable(); setStatus('dimuat dari raw URL');
-    }
-
-    async function loadFromGitHubAPI(owner, repo, path, branch, token){
-      setStatus('memuat dari GitHub API...');
-      const api = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}${branch?('?ref='+encodeURIComponent(branch)):''}`;
-      const r = await fetch(api, {headers: token?{Authorization:'token '+token, Accept:'application/vnd.github.v3.raw'}:{Accept:'application/vnd.github.v3.raw'}});
-      if(!r.ok) throw new Error('GitHub API fetch failed: '+r.status);
-      const txt = await r.text(); vocab = JSON.parse(txt); renderTable(); setStatus('dimuat dari GitHub API');
-    }
-
-    async function saveToGitHub(owner, repo, path, branch, token){
-      if(!token) throw new Error('Token dibutuhkan untuk menyimpan ke GitHub');
-      setStatus('mempersiapkan commit...');
-      const getApi = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}${branch?('?ref='+encodeURIComponent(branch)):''}`;
-      const head = await fetch(getApi, {headers:{Authorization:'token '+token}});
-      let sha = null;
-      if(head.ok){ const meta = await head.json(); sha = meta.sha; }
-      const body = {
-        message: `Update vocab.json via web editor @ ${new Date().toISOString()}`,
-        content: utf8_to_b64(JSON.stringify(vocab, null, 2)),
-      };
-      if(branch) body.branch = branch;
-      if(sha) body.sha = sha;
-      const put = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}`, {method:'PUT', headers:{Authorization:'token '+token, 'Content-Type':'application/json'}, body: JSON.stringify(body)});
-      if(!put.ok){ const txt = await put.text(); throw new Error('GitHub PUT failed: '+put.status+'\\n'+txt); }
-      setStatus('tersimpan ke GitHub');
-    }
-
-    function saveToLocal(){ localStorage.setItem(localKey, JSON.stringify(vocab)); setStatus('tersimpan ke LocalStorage'); }
-    function loadFromLocal(){ const s=localStorage.getItem(localKey); if(!s) throw new Error('tidak ada data local'); vocab = JSON.parse(s); renderTable(); setStatus('dimuat dari LocalStorage'); }
-
-    // Buttons
-    document.getElementById('btnLoad').onclick = async ()=>{
-      try{
-        const raw = document.getElementById('rawUrl').value.trim();
-        if(raw){ await loadFromRawUrl(raw); return; }
-        const owner=document.getElementById('ghOwner').value.trim();
-        const repo=document.getElementById('ghRepo').value.trim();
-        const path=document.getElementById('ghPath').value.trim();
-        const branch=document.getElementById('ghBranch').value.trim();
-        const token=document.getElementById('ghToken').value.trim();
-        if(owner && repo && path){ await loadFromGitHubAPI(owner, repo, path, branch, token||null); return; }
-        await loadFromLocal();
-      }catch(e){ setStatus('error: '+e.message, true); console.error(e); alert('Gagal memuat: '+e.message); }
-    };
-
-    document.getElementById('btnSaveGit').onclick = async ()=>{
-      try{
-        const owner=document.getElementById('ghOwner').value.trim();
-        const repo=document.getElementById('ghRepo').value.trim();
-        const path=document.getElementById('ghPath').value.trim();
-        const branch=document.getElementById('ghBranch').value.trim();
-        const token=document.getElementById('ghToken').value.trim();
-        if(!owner || !repo || !path){ alert('Isi owner, repo, dan path untuk menyimpan ke GitHub'); return; }
-        await saveToGitHub(owner, repo, path, branch||'main', token);
-      }catch(e){ setStatus('error saat simpan: '+e.message, true); console.error(e); alert('Gagal simpan ke GitHub: '+e.message); }
-    };
-
-    document.getElementById('btnSaveLocal').onclick = ()=>{ saveToLocal(); };
-
-    // Init: try load local else empty
-    (function(){
-      const s = localStorage.getItem(localKey);
-      if(s){ try{ vocab = JSON.parse(s); renderTable(); setStatus('data local ditemukan'); return; }catch(_){} }
-      vocab = [];
-      renderTable();
+  useEffect(() => {
+    (async () => {
+      const saved = (await localforage.getItem('vocab')) || [];
+      const savedCats = (await localforage.getItem('categories')) || DEFAULT_CATEGORIES;
+      setItems(saved);
+      setCategories(savedCats.length ? savedCats : DEFAULT_CATEGORIES);
     })();
+  }, []);
 
-    // Ctrl/Cmd+S shortcut to save local
-    window.addEventListener('keydown', (e)=>{ if((e.ctrlKey||e.metaKey) && e.key==='s'){ e.preventDefault(); saveToLocal(); } });
-  </script>
-</body>
-</html>
+  useEffect(() => {
+    localforage.setItem('vocab', items);
+  }, [items]);
+
+  useEffect(() => {
+    localforage.setItem('categories', categories);
+  }, [categories]);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    let arr = items.filter((it) => {
+      if (categoryFilter !== 'All' && it.category !== categoryFilter) return false;
+      if (!q) return true;
+      return (
+        it.chinese.toLowerCase().includes(q) ||
+        it.pinyin.toLowerCase().includes(q) ||
+        it.indo.toLowerCase().includes(q) ||
+        (it.note || '').toLowerCase().includes(q)
+      );
+    });
+    if (sortBy === 'alpha') arr = arr.sort((a, b) => a.chinese.localeCompare(b.chinese));
+    if (sortBy === 'recent') arr = arr.sort((a, b) => b.updatedAt - a.updatedAt);
+    return arr;
+  }, [items, query, categoryFilter, sortBy]);
+
+  function openNewForm(cat = 'IT') {
+    setForm({ chinese: '', pinyin: '', indo: '', category: cat, note: '' });
+    setEditing(null);
+    setShowForm(true);
+  }
+
+  function handleChange(e) {
+    const { name, value } = e.target;
+    setForm((s) => ({ ...s, [name]: value }));
+  }
+
+  function addOrUpdate(e) {
+    e.preventDefault();
+    const now = Date.now();
+    if (editing) {
+      setItems((prev) => prev.map((it) => (it.id === editing.id ? { ...editing, ...form, updatedAt: now } : it)));
+      setEditing(null);
+    } else {
+      const entry = { id: uid(), ...form, createdAt: now, updatedAt: now };
+      setItems((p) => [entry, ...p]);
+    }
+    setShowForm(false);
+  }
+
+  function startEdit(item) {
+    setEditing(item);
+    setForm({ chinese: item.chinese, pinyin: item.pinyin, indo: item.indo, category: item.category, note: item.note || '' });
+    setShowForm(true);
+  }
+
+  function removeItem(id) {
+    if (!confirm('Hapus kosa kata ini?')) return;
+    setItems((p) => p.filter((it) => it.id !== id));
+  }
+
+  function addCategory() {
+    const name = prompt('Nama kategori baru:');
+    if (!name) return;
+    if (categories.includes(name)) return alert('Kategori sudah ada');
+    setCategories((c) => [...c, name]);
+  }
+
+  function exportJSON() {
+    const blob = new Blob([JSON.stringify({ items, categories }, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `mandarin-vocab-backup-${new Date().toISOString()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function importJSON(file) {
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      if (Array.isArray(data.items)) setItems(data.items.concat(items));
+      if (Array.isArray(data.categories)) setCategories(Array.from(new Set([...categories, ...data.categories])));
+      alert('Import selesai');
+    } catch (err) {
+      alert('Gagal import: ' + err.message);
+    }
+  }
+
+  function clearAll() {
+    if (!confirm('Hapus semua kosa kata? Tindakan ini tidak bisa dibatalkan.')) return;
+    setItems([]);
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 p-6">
+      <div className="max-w-5xl mx-auto">
+        <header className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-extrabold tracking-tight">词汇本 · Mandarin Vocab</h1>
+            <p className="text-sm text-slate-500">Kamus pribadimu — tambah, cari, dan simpan selamanya.</p>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => openNewForm('IT')} className="px-4 py-2 rounded-2xl bg-emerald-600 text-white shadow">+ Kata Baru</button>
+            <div className="p-2 rounded-2xl bg-white shadow flex items-center gap-2">
+              <label className="text-xs text-slate-500">Kategori</label>
+              <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="outline-none">
+                <option>All</option>
+                {categories.map((c) => (<option key={c}>{c}</option>))}
+              </select>
+            </div>
+          </div>
+        </header>
+
+        <section className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="col-span-2">
+            <div className="flex gap-2 mb-3">
+              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Cari:中文 / pinyin / Indonesia / catatan" className="flex-1 px-4 py-3 rounded-lg shadow-sm border border-slate-200" />
+              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="px-3 py-2 rounded-lg border">
+                <option value="recent">Terbaru</option>
+                <option value="alpha">Abjad (中文)</option>
+              </select>
+            </div>
+            <div className="bg-white rounded-2xl shadow p-4">
+              {filtered.length === 0 ? (
+                <div className="p-8 text-center text-slate-400">Tidak ada kosa kata. Tambahkan baru!</div>
+              ) : (
+                <ul className="space-y-3">
+                  {filtered.map((it) => (
+                    <li key={it.id} className="flex items-start gap-4 p-3 rounded-lg hover:bg-slate-50">
+                      <div className="flex-1">
+                        <div className="flex items-baseline gap-3">
+                          <strong className="text-xl leading-none">{it.chinese}</strong>
+                          <span className="text-sm text-slate-500">{it.pinyin}</span>
+                          <span className="ml-auto text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-600">{it.category}</span>
+                        </div>
+                        <div className="mt-1 text-slate-700">{it.indo}</div>
+                        {it.note && <div className="mt-2 text-xs text-slate-500">{it.note}</div>}
+                        <div className="mt-2 text-xs text-slate-400">{new Date(it.updatedAt).toLocaleString()}</div>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <button onClick={() => startEdit(it)} className="text-sm px-3 py-1 rounded-lg border">Edit</button>
+                        <button onClick={() => removeItem(it.id)} className="text-sm px-3 py-1 rounded-lg border text-rose-600">Hapus</button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+
+          <aside className="bg-white rounded-2xl shadow p-4">
+            <h3 className="font-semibold">Kategori</h3>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button onClick={() => setCategoryFilter('All')} className={`px-3 py-1 rounded-full border ${categoryFilter==='All'?'bg-slate-100':''}`}>All</button>
+              {categories.map((c) => (
+                <button key={c} onClick={() => setCategoryFilter(c)} className={`px-3 py-1 rounded-full border ${categoryFilter===c?'bg-slate-100':''}`}>{c}</button>
+              ))}
+              <button onClick={addCategory} className="px-3 py-1 rounded-full border">+ Tambah</button>
+            </div>
+
+            <div className="mt-6">
+              <h4 className="font-medium">Data</h4>
+              <div className="mt-2 flex flex-col gap-2">
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="file" accept="application/json" onChange={(e) => e.target.files && importJSON(e.target.files[0])} />
+                </label>
+                <div className="flex gap-2">
+                  <button onClick={exportJSON} className="flex-1 px-3 py-2 rounded-lg border">Export JSON</button>
+                  <button onClick={clearAll} className="flex-1 px-3 py-2 rounded-lg border text-rose-600">Clear All</button>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 text-xs text-slate-400">Persistent storage: disimpan di browser menggunakan IndexedDB. Untuk membagikan antara device, gunakan Export / Import.</div>
+          </aside>
+        </section>
+
+        {/* Form modal-ish area */}
+        {showForm && (
+          <div className="fixed inset-0 flex items-center justify-center z-50">
+            <div className="absolute inset-0 bg-black/30" onClick={() => setShowForm(false)}></div>
+            <form onSubmit={addOrUpdate} className="relative bg-white rounded-2xl shadow-lg p-6 w-full max-w-2xl z-10">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">{editing ? 'Edit Kata' : 'Tambah Kata Baru'}</h3>
+                <button type="button" onClick={() => setShowForm(false)} className="text-slate-500">Tutup</button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs">中文 (Han)</label>
+                  <input name="chinese" required value={form.chinese} onChange={handleChange} className="w-full px-3 py-2 rounded-lg border mt-1" />
+                </div>
+                <div>
+                  <label className="text-xs">Pinyin</label>
+                  <input name="pinyin" value={form.pinyin} onChange={handleChange} className="w-full px-3 py-2 rounded-lg border mt-1" />
+                </div>
+                <div>
+                  <label className="text-xs">Indonesia</label>
+                  <input name="indo" value={form.indo} onChange={handleChange} className="w-full px-3 py-2 rounded-lg border mt-1" />
+                </div>
+                <div>
+                  <label className="text-xs">Kategori</label>
+                  <select name="category" value={form.category} onChange={handleChange} className="w-full px-3 py-2 rounded-lg border mt-1">
+                    {categories.map((c) => (<option key={c} value={c}>{c}</option>))}
+                  </select>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="text-xs">Catatan / Contoh</label>
+                  <textarea name="note" value={form.note} onChange={handleChange} className="w-full px-3 py-2 rounded-lg border mt-1" rows={3}></textarea>
+                </div>
+              </div>
+              <div className="mt-4 flex items-center gap-2">
+                <button type="submit" className="px-4 py-2 rounded-2xl bg-emerald-600 text-white">Simpan</button>
+                <button type="button" onClick={() => { setShowForm(false); setEditing(null); }} className="px-4 py-2 rounded-2xl border">Batal</button>
+                {editing && <button type="button" onClick={() => { if (confirm('Hapus entry ini?')) { removeItem(editing.id); setShowForm(false); } }} className="ml-auto text-rose-600">Hapus</button>}
+              </div>
+            </form>
+          </div>
+        )}
+
+        <footer className="mt-10 text-center text-slate-400">Made with ❤️ — simpanlah kata-kata seperti menanam pohon kecil.</footer>
+      </div>
+    </div>
+  );
+}
