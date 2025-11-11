@@ -1,94 +1,18 @@
-import React, { useState, useMemo } from 'react';
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kamus Pribadi Stenley</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>📖 Kamus Pribadi</h1>
+    <input type="text" id="searchInput" placeholder="Cari kata..." />
+    <div id="result"></div>
+  </div>
 
-export default function App() {
-  const [vocabList, setVocabList] = useState([
-    { chinese: '爱', pinyin: 'ài', meaning: 'cinta' },
-    { chinese: '电脑', pinyin: 'diànnǎo', meaning: 'komputer' },
-    { chinese: '工作', pinyin: 'gōngzuò', meaning: 'bekerja' },
-    { chinese: '学习', pinyin: 'xuéxí', meaning: 'belajar' },
-    { chinese: '朋友', pinyin: 'péngyou', meaning: 'teman' }
-  ]);
-  const [search, setSearch] = useState('');
-  const [newWord, setNewWord] = useState({ chinese: '', pinyin: '', meaning: '' });
-
-  const filtered = useMemo(() => {
-    return vocabList
-      .filter(v => (
-        v.chinese.includes(search) ||
-        v.pinyin.toLowerCase().includes(search.toLowerCase()) ||
-        v.meaning.toLowerCase().includes(search.toLowerCase())
-      ))
-      .sort((a, b) => a.chinese.localeCompare(b.chinese, 'zh-Hans-CN'));
-  }, [search, vocabList]);
-
-  const addWord = (e) => {
-    e.preventDefault();
-    if (!newWord.chinese || !newWord.meaning) return;
-    setVocabList([...vocabList, newWord]);
-    setNewWord({ chinese: '', pinyin: '', meaning: '' });
-  };
-
-  return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(to bottom, #e0f2fe, #ffffff)', color: '#1e293b', padding: '24px' }}>
-      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-        <h1 style={{ fontSize: '2rem', fontWeight: 'bold', textAlign: 'center', marginBottom: '16px' }}>📘 Kamus Mandarin Pribadi</h1>
-
-        <input
-          type="text"
-          placeholder="Cari kata, pinyin, atau arti..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{ width: '100%', marginBottom: '16px', padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
-        />
-
-        <form onSubmit={addWord} style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '24px' }}>
-          <input
-            type="text"
-            placeholder="汉字 (Mandarin)"
-            value={newWord.chinese}
-            onChange={(e) => setNewWord({ ...newWord, chinese: e.target.value })}
-            style={{ flex: '1', padding: '8px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
-          />
-          <input
-            type="text"
-            placeholder="Pinyin"
-            value={newWord.pinyin}
-            onChange={(e) => setNewWord({ ...newWord, pinyin: e.target.value })}
-            style={{ flex: '1', padding: '8px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
-          />
-          <input
-            type="text"
-            placeholder="Arti (Indonesia)"
-            value={newWord.meaning}
-            onChange={(e) => setNewWord({ ...newWord, meaning: e.target.value })}
-            style={{ flex: '1', padding: '8px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
-          />
-          <button type="submit" style={{ padding: '8px 16px', background: '#2563eb', color: 'white', border: 'none', borderRadius: '8px' }}>Tambah</button>
-        </form>
-
-        <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 2px 6px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead style={{ background: '#bfdbfe' }}>
-              <tr>
-                <th style={{ border: '1px solid #cbd5e1', padding: '8px', textAlign: 'left' }}>汉字</th>
-                <th style={{ border: '1px solid #cbd5e1', padding: '8px', textAlign: 'left' }}>Pinyin</th>
-                <th style={{ border: '1px solid #cbd5e1', padding: '8px', textAlign: 'left' }}>Arti</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((v, i) => (
-                <tr key={i} style={{ background: i % 2 === 0 ? '#f8fafc' : 'white' }}>
-                  <td style={{ border: '1px solid #cbd5e1', padding: '8px', fontWeight: '600', fontSize: '1.2rem' }}>{v.chinese}</td>
-                  <td style={{ border: '1px solid #cbd5e1', padding: '8px', fontStyle: 'italic', color: '#475569' }}>{v.pinyin}</td>
-                  <td style={{ border: '1px solid #cbd5e1', padding: '8px' }}>{v.meaning}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <p style={{ marginTop: '24px', textAlign: 'center', fontSize: '0.9rem', color: '#64748b' }}>Dibuat dengan ❤️ untuk belajar setiap hari.</p>
-      </div>
-    </div>
-  );
-}
+  <script src="script.js"></script>
+</body>
+</html>
