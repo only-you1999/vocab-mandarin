@@ -269,7 +269,7 @@ document.addEventListener("DOMContentLoaded", loadVocab);
     // keyboard shortcut: Ctrl+S to save local
     window.addEventListener('keydown', (e)=>{ if((e.ctrlKey||e.metaKey) && e.key==='s'){ e.preventDefault(); saveToLocal(); } });
   <script>// --- otomatis load vocab.json dari repo GitHub kamu ---
-const VOCAB_URL = "https://raw.githubusercontent.com/USERNAME/REPO/main/vocab.json"; // <== ganti USERNAME & REPO kamu
+const VOCAB_URL = "https://github.com/only-you1999/vocab-mandarin/blob/main/vocab.json"; // <== ganti USERNAME & REPO kamu
 
 async function loadVocab() {
   try {
