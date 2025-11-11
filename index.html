@@ -124,7 +124,7 @@
       )
       .forEach(v => {
         const row = document.createElement("tr");
-        row.innerHTML =   <td>${v.hanzi}</td>
+        row.innerHTML = `  <td>${v.hanzi}</td>
     <td>${v.pinyin}</td>
     <td>${v.english}</td>
     <td><button onclick="startEdit('${v.hanzi}', '${v.pinyin}', '${v.english}')">Edit</button></td>
@@ -147,10 +147,16 @@
     document.getElementById("pinyinInput").value = "";
     document.getElementById("englishInput").value = "";
 
-    renderTable();
-  }
-
   renderTable();
+  function startEdit(h, p, e) {
+  document.getElementById("hanziInput").value = h;
+  document.getElementById("pinyinInput").value = p;
+  document.getElementById("englishInput").value = e;
+
+  vocab = vocab.filter(v => !(v.hanzi === h && v.pinyin === p && v.english === e));
+  localStorage.setItem("vocab", JSON.stringify(vocab));
+  renderTable();
+}
 </script>
 
 </body>
