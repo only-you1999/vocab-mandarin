@@ -29,67 +29,65 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white text-slate-800 p-6">
-      <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold mb-4 text-center">📘 Kamus Mandarin Pribadi</h1>
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(to bottom, #e0f2fe, #ffffff)', color: '#1e293b', padding: '24px' }}>
+      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+        <h1 style={{ fontSize: '2rem', fontWeight: 'bold', textAlign: 'center', marginBottom: '16px' }}>📘 Kamus Mandarin Pribadi</h1>
 
         <input
           type="text"
           placeholder="Cari kata, pinyin, atau arti..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full mb-4 px-4 py-2 rounded-lg border border-slate-300"
+          style={{ width: '100%', marginBottom: '16px', padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
         />
 
-        <form onSubmit={addWord} className="flex flex-wrap gap-2 mb-6">
+        <form onSubmit={addWord} style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '24px' }}>
           <input
             type="text"
             placeholder="汉字 (Mandarin)"
             value={newWord.chinese}
             onChange={(e) => setNewWord({ ...newWord, chinese: e.target.value })}
-            className="flex-1 px-3 py-2 border rounded-lg"
+            style={{ flex: '1', padding: '8px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
           />
           <input
             type="text"
             placeholder="Pinyin"
             value={newWord.pinyin}
             onChange={(e) => setNewWord({ ...newWord, pinyin: e.target.value })}
-            className="flex-1 px-3 py-2 border rounded-lg"
+            style={{ flex: '1', padding: '8px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
           />
           <input
             type="text"
             placeholder="Arti (Indonesia)"
             value={newWord.meaning}
             onChange={(e) => setNewWord({ ...newWord, meaning: e.target.value })}
-            className="flex-1 px-3 py-2 border rounded-lg"
+            style={{ flex: '1', padding: '8px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
           />
-          <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg">Tambah</button>
+          <button type="submit" style={{ padding: '8px 16px', background: '#2563eb', color: 'white', border: 'none', borderRadius: '8px' }}>Tambah</button>
         </form>
 
-        <div className="bg-white shadow rounded-lg overflow-hidden">
-          <table className="min-w-full border-collapse">
-            <thead className="bg-blue-100">
+        <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 2px 6px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead style={{ background: '#bfdbfe' }}>
               <tr>
-                <th className="border px-3 py-2 text-left">汉字</th>
-                <th className="border px-3 py-2 text-left">Pinyin</th>
-                <th className="border px-3 py-2 text-left">Arti</th>
+                <th style={{ border: '1px solid #cbd5e1', padding: '8px', textAlign: 'left' }}>汉字</th>
+                <th style={{ border: '1px solid #cbd5e1', padding: '8px', textAlign: 'left' }}>Pinyin</th>
+                <th style={{ border: '1px solid #cbd5e1', padding: '8px', textAlign: 'left' }}>Arti</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((v, i) => (
-                <tr key={i} className="hover:bg-blue-50">
-                  <td className="border px-3 py-2 font-semibold text-xl">{v.chinese}</td>
-                  <td className="border px-3 py-2 italic text-slate-600">{v.pinyin}</td>
-                  <td className="border px-3 py-2">{v.meaning}</td>
+                <tr key={i} style={{ background: i % 2 === 0 ? '#f8fafc' : 'white' }}>
+                  <td style={{ border: '1px solid #cbd5e1', padding: '8px', fontWeight: '600', fontSize: '1.2rem' }}>{v.chinese}</td>
+                  <td style={{ border: '1px solid #cbd5e1', padding: '8px', fontStyle: 'italic', color: '#475569' }}>{v.pinyin}</td>
+                  <td style={{ border: '1px solid #cbd5e1', padding: '8px' }}>{v.meaning}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
 
-        <footer className="mt-8 text-center text-sm text-slate-500">
-          Dibuat dengan ❤️ untuk belajar setiap hari.
-        </footer>
+        <p style={{ marginTop: '24px', textAlign: 'center', fontSize: '0.9rem', color: '#64748b' }}>Dibuat dengan ❤️ untuk belajar setiap hari.</p>
       </div>
     </div>
   );
