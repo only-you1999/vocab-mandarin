@@ -67,5 +67,54 @@
       renderList(filtered);
     });
   </script>
+<script>
+async function loadVocab() {
+  const res = await fetch('vocab.json');
+  const data = await res.json();
+  renderList(data);
+  window.vocabData = data;
+}
+
+function renderList(data) {
+  const list = document.getElementById('vocab-list');
+  list.innerHTML = '';
+  data.forEach(item => {
+    const li = document.createElement('li');
+    li.textContent = `${item.chinese} — ${item.pinyin} — ${item.translate}`;
+    list.appendChild(li);
+  });
+}
+
+async function addNewWord() {
+  const chinese = prompt("汉字:");
+  const pinyin = prompt("拼音:");
+  const translate = prompt("Arti Indonesia:");
+
+  if (!chinese || !pinyin || !translate) return;
+
+  window.vocabData.push({
+    chinese,
+    pinyin,
+    translate
+  });
+
+  renderList(window.vocabData);
+
+  // upload manual: copy JSON ke vocab.json
+  alert("✅ Kata ditambahkan!\n\nSilakan copy JSON ini dan update vocab.json secara manual di GitHub:\n\n" + JSON.stringify(window.vocabData, null, 2));
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  loadVocab();
+
+  const btn = document.createElement("button");
+  btn.textContent = "Tambah Kata Baru";
+  btn.style.fontSize = "16px";
+  btn.style.margin = "10px 0";
+  btn.onclick = addNewWord;
+
+  document.body.prepend(btn);
+});
+</script>
 </body>
 </html>
