@@ -3,70 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <title>Mandarin Vocabulary</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 900px;
-      margin: 40px auto;
-      padding: 20px;
-      line-height: 1.6;
-    }
-    #search {
-      width: 100%;
-      padding: 12px 16px;
-      font-size: 16px;
-      margin-bottom: 20px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-    }
-    li {
-      margin: 8px 0;
-    }
-  </style>
 </head>
-
 <body>
   <h1>我的汉语词汇表</h1>
-
-  <input id="search" placeholder="搜索词语 / pinyin / arti..." />
 
   <ul id="vocab-list"></ul>
 
   <script>
-    let vocabData = [];
-
-    // Ambil data dari vocab.json
     fetch('vocab.json')
       .then(response => response.json())
       .then(vocab => {
-        vocabData = vocab;
-        renderList(vocabData);
+        const list = document.getElementById('vocab-list');
+        vocab.forEach(item => {
+          const li = document.createElement('li');
+          li.textContent = `${item.chinese} — ${item.pinyin} — ${item.definition}`;
+          list.appendChild(li);
+        });
       });
-
-    // Fungsi untuk menampilkan daftar vocab
-    function renderList(data) {
-      const list = document.getElementById('vocab-list');
-      list.innerHTML = "";
-      data.forEach(item => {
-        const li = document.createElement('li');
-        li.textContent = `${item.chinese} — ${item.pinyin} — ${item.definition}`;
-        list.appendChild(li);
-      });
-    }
-
-    // Search bar event
-    document.getElementById('search').addEventListener('input', function() {
-      const keyword = this.value.toLowerCase();
-
-      const filtered = vocabData.filter(item =>
-        item.chinese.includes(keyword) ||
-        item.pinyin.toLowerCase().includes(keyword) ||
-        item.definition.toLowerCase().includes(keyword)
-      );
-
-      renderList(filtered);
-    });
   </script>
-
 </body>
 </html>
