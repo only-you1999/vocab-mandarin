@@ -13,6 +13,80 @@
     <div id="result"></div>
   </div>
 
+  // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyCGvKt4ZtbBGJbMvyAxq4y_re79cg8ZL54",
+  authDomain: "vocab-44e25.firebaseapp.com",
+  projectId: "vocab-44e25",
+  storageBucket: "vocab-44e25.firebasestorage.app",
+  messagingSenderId: "819266282443",
+  appId: "1:819266282443:web:98274e75f94c7567bc4c4e",
+  measurementId: "G-8YRYMZ5L2Q"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+   <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaxxx...",
+      authDomain: "kamus-stenley.firebaseapp.com",
+      projectId: "kamus-stenley",
+      storageBucket: "kamus-stenley.appspot.com",
+      messagingSenderId: "123456789",
+      appId: "1:123456789:web:abcdef123456"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Ambil data dari Firestore
+    async function loadWords() {
+      const querySnapshot = await getDocs(collection(db, "kosakata"));
+      const resultDiv = document.getElementById("result");
+      let html = "";
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        html += `
+          <div class="entry">
+            <strong>${data.mandarin}</strong> (${data.pinyin})<br>
+            ${data.indonesia}
+          </div>
+          <hr>
+        `;
+      });
+      resultDiv.innerHTML = html;
+    }
+
+    // Tambah data ke Firestore
+    document.getElementById("addWordForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const mandarin = document.getElementById("newMandarin").value.trim();
+      const pinyin = document.getElementById("newPinyin").value.trim();
+      const indonesia = document.getElementById("newIndonesia").value.trim();
+
+      if (!mandarin || !pinyin || !indonesia) return alert("Lengkapi semua kolom!");
+
+      await addDoc(collection(db, "kosakata"), { mandarin, pinyin, indonesia });
+      alert("✅ Kosakata baru berhasil ditambahkan!");
+      e.target.reset();
+      loadWords(); // refresh daftar
+    });
+
+    loadWords();
+  </script>
+
+  <!-- Script JS lama kamu -->
   <script src="script.js"></script>
 </body>
 </html>
