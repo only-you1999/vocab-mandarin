@@ -9,11 +9,32 @@
 <body>
   <div class="container">
     <h1>📖 周哥中文词汇学习表</h1>
+    
+    <!-- FORM TAMBAH KOSA KATA BARU - TAMBAHKAN DI SINI -->
+    <div class="add-vocab-section">
+      <h2>➕ Tambah Kosa Kata Baru</h2>
+      <form id="addWordForm" class="vocab-form">
+        <div class="form-group">
+          <input type="text" id="newMandarin" placeholder="Karakter Mandarin" required>
+        </div>
+        
+        <div class="form-group">
+          <input type="text" id="newPinyin" placeholder="Pinyin" required>
+        </div>
+        
+        <div class="form-group">
+          <input type="text" id="newIndonesia" placeholder="Arti Indonesia" required>
+        </div>
+        
+        <button type="submit" class="btn-add">Tambah Kosa Kata</button>
+      </form>
+    </div>
+
     <input type="text" id="searchInput" placeholder="Cari kata..." />
     <div id="result"></div>
   </div>
 
-   <script type="module">
+  <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
     import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
@@ -56,16 +77,94 @@
 
       if (!mandarin || !pinyin || !indonesia) return alert("Lengkapi semua kolom!");
 
-      await addDoc(collection(db, "kosakata"), { mandarin, pinyin, indonesia });
-      alert("✅ Kosakata baru berhasil ditambahkan!");
-      e.target.reset();
-      loadWords(); // refresh daftar
+      try {
+        await addDoc(collection(db, "kosakata"), { 
+          mandarin, 
+          pinyin, 
+          indonesia 
+        });
+        alert("✅ Kosakata baru berhasil ditambahkan!");
+        e.target.reset();
+        loadWords(); // refresh daftar
+      } catch (error) {
+        console.error("Error adding document: ", error);
+        alert("❌ Gagal menambahkan kosa kata!");
+      }
     });
 
     loadWords();
   </script>
 
-  <!-- Script JS lama kamu -->
-  <script src="script.js"></script>
+  <!-- Tambahkan juga CSS ini di file style.css -->
+  <style>
+    /* Style untuk form tambah vocab */
+    .add-vocab-section {
+      background: #f8f9fa;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      border-radius: 10px;
+      border: 2px solid #e9ecef;
+    }
+
+    .add-vocab-section h2 {
+      margin-top: 0;
+      color: #333;
+      text-align: center;
+    }
+
+    .vocab-form {
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 0.75rem;
+      border: 2px solid #ddd;
+      border-radius: 5px;
+      font-size: 1rem;
+      transition: border-color 0.3s;
+      box-sizing: border-box;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #4CAF50;
+    }
+
+    .btn-add {
+      background: #4CAF50;
+      color: white;
+      padding: 0.75rem 2rem;
+      border: none;
+      border-radius: 5px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s;
+      width: 100%;
+    }
+
+    .btn-add:hover {
+      background: #45a049;
+    }
+
+    /* Style untuk entry yang sudah ada */
+    .entry {
+      padding: 1rem;
+      margin: 0.5rem 0;
+      background: white;
+      border-radius: 5px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .entry strong {
+      color: #2c3e50;
+      font-size: 1.2em;
+    }
+  </style>
 </body>
 </html>
