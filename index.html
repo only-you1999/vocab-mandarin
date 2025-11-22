@@ -1,170 +1,303 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kamus Pribadi Stenley</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pembelajaran Kosakata Mandarin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: #c62828;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+        }
+        
+        .input-section, .vocab-list {
+            flex: 1;
+            min-width: 300px;
+            background-color: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        h2 {
+            color: #c62828;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        button {
+            background-color: #c62828;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #b71c1c;
+        }
+        
+        .search-box {
+            margin-bottom: 20px;
+        }
+        
+        .vocab-item {
+            background-color: #f9f9f9;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #c62828;
+        }
+        
+        .vocab-chinese {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+        
+        .vocab-pinyin {
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .vocab-meaning {
+            font-weight: 600;
+        }
+        
+        .vocab-example {
+            margin-top: 8px;
+            font-style: italic;
+            color: #555;
+        }
+        
+        .empty-message {
+            text-align: center;
+            color: #888;
+            padding: 20px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #666;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1>📖 周哥中文词汇学习表</h1>
-    
-    <!-- FORM TAMBAH KOSA KATA BARU - TAMBAHKAN DI SINI -->
-    <div class="add-vocab-section">
-      <h2>➕ Tambah Kosa Kata Baru</h2>
-      <form id="addWordForm" class="vocab-form">
-        <div class="form-group">
-          <input type="text" id="newMandarin" placeholder="Karakter Mandarin" required>
+    <div class="container">
+        <header>
+            <h1>Pembelajaran Kosakata Mandarin</h1>
+            <p class="subtitle">Tambah dan pelajari kosakata bahasa Mandarin dengan mudah</p>
+        </header>
+        
+        <div class="main-content">
+            <section class="input-section">
+                <h2>Tambah Kosakata Baru</h2>
+                <form id="vocab-form">
+                    <div class="form-group">
+                        <label for="chinese">Karakter Mandarin</label>
+                        <input type="text" id="chinese" placeholder="Contoh: 你好" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="pinyin">Pinyin</label>
+                        <input type="text" id="pinyin" placeholder="Contoh: nǐ hǎo" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="meaning">Arti dalam Bahasa Indonesia</label>
+                        <input type="text" id="meaning" placeholder="Contoh: halo" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="example">Contoh Penggunaan (opsional)</label>
+                        <textarea id="example" placeholder="Contoh: 你好吗？ (nǐ hǎo ma?) - Apa kabar?"></textarea>
+                    </div>
+                    
+                    <button type="submit">Simpan Kosakata</button>
+                </form>
+            </section>
+            
+            <section class="vocab-list">
+                <h2>Daftar Kosakata</h2>
+                
+                <div class="search-box">
+                    <input type="text" id="search" placeholder="Cari kosakata...">
+                </div>
+                
+                <div id="vocab-container">
+                    <!-- Daftar kosakata akan ditampilkan di sini -->
+                    <div class="empty-message" id="empty-message">
+                        Belum ada kosakata. Silakan tambahkan kosakata baru.
+                    </div>
+                </div>
+            </section>
         </div>
         
-        <div class="form-group">
-          <input type="text" id="newPinyin" placeholder="Pinyin" required>
-        </div>
-        
-        <div class="form-group">
-          <input type="text" id="newIndonesia" placeholder="Arti Indonesia" required>
-        </div>
-        
-        <button type="submit" class="btn-add">Tambah Kosa Kata</button>
-      </form>
+        <footer>
+            <p>&copy; 2023 Pembelajaran Kosakata Mandarin. Semua hak dilindungi.</p>
+        </footer>
     </div>
 
-    <input type="text" id="searchInput" placeholder="Cari kata..." />
-    <div id="result"></div>
-  </div>
-
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaxxx...",
-      authDomain: "kamus-stenley.firebaseapp.com",
-      projectId: "kamus-stenley",
-      storageBucket: "kamus-stenley.appspot.com",
-      messagingSenderId: "123456789",
-      appId: "1:123456789:web:abcdef123456"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    // Ambil data dari Firestore
-    async function loadWords() {
-      const querySnapshot = await getDocs(collection(db, "kosakata"));
-      const resultDiv = document.getElementById("result");
-      let html = "";
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        html += `
-          <div class="entry">
-            <strong>${data.mandarin}</strong> (${data.pinyin})<br>
-            ${data.indonesia}
-          </div>
-          <hr>
-        `;
-      });
-      resultDiv.innerHTML = html;
-    }
-
-    // Tambah data ke Firestore
-    document.getElementById("addWordForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const mandarin = document.getElementById("newMandarin").value.trim();
-      const pinyin = document.getElementById("newPinyin").value.trim();
-      const indonesia = document.getElementById("newIndonesia").value.trim();
-
-      if (!mandarin || !pinyin || !indonesia) return alert("Lengkapi semua kolom!");
-
-      try {
-        await addDoc(collection(db, "kosakata"), { 
-          mandarin, 
-          pinyin, 
-          indonesia 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const vocabForm = document.getElementById('vocab-form');
+            const searchInput = document.getElementById('search');
+            const vocabContainer = document.getElementById('vocab-container');
+            const emptyMessage = document.getElementById('empty-message');
+            
+            // Inisialisasi data kosakata dari localStorage atau array kosong
+            let vocabularies = JSON.parse(localStorage.getItem('mandarinVocabularies')) || [];
+            
+            // Tampilkan kosakata saat pertama kali memuat halaman
+            displayVocabularies(vocabularies);
+            
+            // Event listener untuk form tambah kosakata
+            vocabForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const chinese = document.getElementById('chinese').value.trim();
+                const pinyin = document.getElementById('pinyin').value.trim();
+                const meaning = document.getElementById('meaning').value.trim();
+                const example = document.getElementById('example').value.trim();
+                
+                if (chinese && pinyin && meaning) {
+                    const newVocab = {
+                        id: Date.now(),
+                        chinese,
+                        pinyin,
+                        meaning,
+                        example
+                    };
+                    
+                    vocabularies.push(newVocab);
+                    saveVocabularies();
+                    displayVocabularies(vocabularies);
+                    
+                    // Reset form
+                    vocabForm.reset();
+                }
+            });
+            
+            // Event listener untuk pencarian
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const filteredVocab = vocabularies.filter(vocab => 
+                    vocab.chinese.toLowerCase().includes(searchTerm) ||
+                    vocab.pinyin.toLowerCase().includes(searchTerm) ||
+                    vocab.meaning.toLowerCase().includes(searchTerm)
+                );
+                
+                displayVocabularies(filteredVocab);
+            });
+            
+            // Fungsi untuk menampilkan kosakata
+            function displayVocabularies(vocabList) {
+                if (vocabList.length === 0) {
+                    vocabContainer.innerHTML = '';
+                    vocabContainer.appendChild(emptyMessage);
+                    emptyMessage.style.display = 'block';
+                    return;
+                }
+                
+                emptyMessage.style.display = 'none';
+                
+                const vocabHTML = vocabList.map(vocab => `
+                    <div class="vocab-item" data-id="${vocab.id}">
+                        <div class="vocab-chinese">${vocab.chinese}</div>
+                        <div class="vocab-pinyin">${vocab.pinyin}</div>
+                        <div class="vocab-meaning">${vocab.meaning}</div>
+                        ${vocab.example ? `<div class="vocab-example">${vocab.example}</div>` : ''}
+                        <button onclick="deleteVocab(${vocab.id})" style="margin-top: 10px; background-color: #666; padding: 5px 10px; font-size: 0.9rem;">Hapus</button>
+                    </div>
+                `).join('');
+                
+                vocabContainer.innerHTML = vocabHTML;
+            }
+            
+            // Fungsi untuk menyimpan kosakata ke localStorage
+            function saveVocabularies() {
+                localStorage.setItem('mandarinVocabularies', JSON.stringify(vocabularies));
+            }
+            
+            // Fungsi untuk menghapus kosakata (dideklarasikan secara global agar bisa dipanggil dari onclick)
+            window.deleteVocab = function(id) {
+                if (confirm('Apakah Anda yakin ingin menghapus kosakata ini?')) {
+                    vocabularies = vocabularies.filter(vocab => vocab.id !== id);
+                    saveVocabularies();
+                    displayVocabularies(vocabularies);
+                }
+            };
         });
-        alert("✅ Kosakata baru berhasil ditambahkan!");
-        e.target.reset();
-        loadWords(); // refresh daftar
-      } catch (error) {
-        console.error("Error adding document: ", error);
-        alert("❌ Gagal menambahkan kosa kata!");
-      }
-    });
-
-    loadWords();
-  </script>
-
-  <!-- Tambahkan juga CSS ini di file style.css -->
-  <style>
-    /* Style untuk form tambah vocab */
-    .add-vocab-section {
-      background: #f8f9fa;
-      padding: 1.5rem;
-      margin: 1.5rem 0;
-      border-radius: 10px;
-      border: 2px solid #e9ecef;
-    }
-
-    .add-vocab-section h2 {
-      margin-top: 0;
-      color: #333;
-      text-align: center;
-    }
-
-    .vocab-form {
-      max-width: 400px;
-      margin: 0 auto;
-    }
-
-    .form-group {
-      margin-bottom: 1rem;
-    }
-
-    .form-group input {
-      width: 100%;
-      padding: 0.75rem;
-      border: 2px solid #ddd;
-      border-radius: 5px;
-      font-size: 1rem;
-      transition: border-color 0.3s;
-      box-sizing: border-box;
-    }
-
-    .form-group input:focus {
-      outline: none;
-      border-color: #4CAF50;
-    }
-
-    .btn-add {
-      background: #4CAF50;
-      color: white;
-      padding: 0.75rem 2rem;
-      border: none;
-      border-radius: 5px;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: background 0.3s;
-      width: 100%;
-    }
-
-    .btn-add:hover {
-      background: #45a049;
-    }
-
-    /* Style untuk entry yang sudah ada */
-    .entry {
-      padding: 1rem;
-      margin: 0.5rem 0;
-      background: white;
-      border-radius: 5px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-
-    .entry strong {
-      color: #2c3e50;
-      font-size: 1.2em;
-    }
-  </style>
+    </script>
 </body>
 </html>
