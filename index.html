@@ -1,170 +1,127 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kamus Pribadi Stenley</title>
-  <link rel="stylesheet" href="style.css">
+    <title>Kamus Mandarin Saya</title>
+    
+    <!-- KODE KONEKSI KE DATABASE -->
+    <script type="module">
+        // KODE INI SEPERTI PASSWORD UNTUK MASUK KE DATABASE
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+        // INI PASSWORD DATABASE ANDA (copy dari Firebase)
+        const firebaseConfig = {
+            apiKey: "AIzaSyCD_9fpJ0f7n3mG-Px7Lg8D4GErnyTyMA",
+            authDomain: "kosa-kata-b7afb.firebaseapp.com",
+            projectId: "kosa-kata-b7afb",
+            storageBucket: "kosa-kata-b7afb.firebasestorage.app",
+            messagingSenderId: "325184409554",
+            appId: "1:325184409554:web:6c019dbcaa3de30be274d3"
+        };
+
+        // NYALAKAN KONEKSI KE DATABASE
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        // SIMPAN KONEKSI INI AGAR BISA DIPAKAI DI MANA SAJA
+        window.databaseSaya = db;
+        console.log("✅ Berhasil connect ke database!");
+    </script>
 </head>
 <body>
-  <div class="container">
-    <h1>📖 周哥中文词汇学习表</h1>
-    
-    <!-- FORM TAMBAH KOSA KATA BARU - TAMBAHKAN DI SINI -->
-    <div class="add-vocab-section">
-      <h2>➕ Tambah Kosa Kata Baru</h2>
-      <form id="addWordForm" class="vocab-form">
-        <div class="form-group">
-          <input type="text" id="newMandarin" placeholder="Karakter Mandarin" required>
-        </div>
-        
-        <div class="form-group">
-          <input type="text" id="newPinyin" placeholder="Pinyin" required>
-        </div>
-        
-        <div class="form-group">
-          <input type="text" id="newIndonesia" placeholder="Arti Indonesia" required>
-        </div>
-        
-        <button type="submit" class="btn-add">Tambah Kosa Kata</button>
-      </form>
+    <h1>📖 Kamus Mandarin Saya</h1>
+
+    <!-- FORM UNTUK TAMBAH KOSA KATA -->
+    <div style="background: #f0f0f0; padding: 20px; margin: 20px 0; border-radius: 10px;">
+        <h2>➕ Tambah Kosa Kata Baru</h2>
+        <form id="formTambah">
+            <input type="text" id="mandarin" placeholder汉字 (contoh: 你好)" required style="width: 100%; padding: 10px; margin: 5px 0;">
+            <br>
+            <input type="text" id="pinyin" placeholder="Pinyin (contoh: nǐ hǎo)" required style="width: 100%; padding: 10px; margin: 5px 0;">
+            <br>
+            <input type="text" id="arti" placeholder="Arti Indonesia (contoh: halo)" required style="width: 100%; padding: 10px; margin: 5px 0;">
+            <br>
+            <button type="submit" style="width: 100%; padding: 10px; background: #4CAF50; color: white; border: none; border-radius: 5px;">
+                💾 Simpan Kosa Kata
+            </button>
+        </form>
+        <div id="pesan"></div>
     </div>
 
-    <input type="text" id="searchInput" placeholder="Cari kata..." />
-    <div id="result"></div>
-  </div>
+    <!-- TEMPAT UNTUK MENAMPILKAN KOSA KATA -->
+    <div id="daftarKosaKata">
+        <h2>📚 Kosa Kata Saya</h2>
+        <p>Kosa kata akan muncul di sini...</p>
+    </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+    <!-- SCRIPT UNTUK FUNGSI TAMBAH/TAMPIL DATA -->
+    <script type="module">
+        // IMPORT FUNGSI YANG DIPERLUKAN
+        import { collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaxxx...",
-      authDomain: "kamus-stenley.firebaseapp.com",
-      projectId: "kamus-stenley",
-      storageBucket: "kamus-stenley.appspot.com",
-      messagingSenderId: "123456789",
-      appId: "1:123456789:web:abcdef123456"
-    };
+        // AMBIL KONEKSI DATABASE YANG SUDAH DISIMPAN
+        const db = window.databaseSaya;
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+        // FUNGSI UNTUK TAMBAH KOSA KATA
+        document.getElementById('formTambah').addEventListener('submit', async function(e) {
+            e.preventDefault(); // JANGAN REFRESH HALAMAN
+            
+            // AMBIL DATA DARI FORM
+            const mandarin = document.getElementById('mandarin').value;
+            const pinyin = document.getElementById('pinyin').value;
+            const arti = document.getElementById('arti').value;
 
-    // Ambil data dari Firestore
-    async function loadWords() {
-      const querySnapshot = await getDocs(collection(db, "kosakata"));
-      const resultDiv = document.getElementById("result");
-      let html = "";
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        html += `
-          <div class="entry">
-            <strong>${data.mandarin}</strong> (${data.pinyin})<br>
-            ${data.indonesia}
-          </div>
-          <hr>
-        `;
-      });
-      resultDiv.innerHTML = html;
-    }
-
-    // Tambah data ke Firestore
-    document.getElementById("addWordForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const mandarin = document.getElementById("newMandarin").value.trim();
-      const pinyin = document.getElementById("newPinyin").value.trim();
-      const indonesia = document.getElementById("newIndonesia").value.trim();
-
-      if (!mandarin || !pinyin || !indonesia) return alert("Lengkapi semua kolom!");
-
-      try {
-        await addDoc(collection(db, "kosakata"), { 
-          mandarin, 
-          pinyin, 
-          indonesia 
+            // SIMPAN KE DATABASE
+            try {
+                await addDoc(collection(db, "kosakata"), {
+                    mandarin: mandarin,
+                    pinyin: pinyin,
+                    indonesia: arti,
+                    tanggal: new Date()
+                });
+                
+                // TAMPILKAN PESAN SUKSES
+                document.getElementById('pesan').innerHTML = '<p style="color: green; background: #e6ffe6; padding: 10px;">✅ Kosa kata berhasil disimpan!</p>';
+                
+                // KOSONGKAN FORM
+                document.getElementById('formTambah').reset();
+                
+                // TAMPILKAN ULANG DAFTAR KOSA KATA
+                tampilkanKosaKata();
+            } catch (error) {
+                document.getElementById('pesan').innerHTML = '<p style="color: red; background: #ffe6e6; padding: 10px;">❌ Gagal menyimpan: ' + error.message + '</p>';
+            }
         });
-        alert("✅ Kosakata baru berhasil ditambahkan!");
-        e.target.reset();
-        loadWords(); // refresh daftar
-      } catch (error) {
-        console.error("Error adding document: ", error);
-        alert("❌ Gagal menambahkan kosa kata!");
-      }
-    });
 
-    loadWords();
-  </script>
+        // FUNGSI UNTUK MENAMPILKAN KOSA KATA
+        async function tampilkanKosaKata() {
+            try {
+                const querySnapshot = await getDocs(collection(db, "kosakata"));
+                let html = '<h2>📚 Kosa Kata Saya</h2>';
+                
+                if (querySnapshot.empty) {
+                    html += '<p>Belum ada kosa kata. Tambahkan yang pertama!</p>';
+                } else {
+                    querySnapshot.forEach((doc) => {
+                        const data = doc.data();
+                        html += `
+                            <div style="background: white; padding: 15px; margin: 10px 0; border-radius: 5px; border-left: 4px solid #4CAF50;">
+                                <div style="font-size: 24px; font-weight: bold;">${data.mandarin}</div>
+                                <div style="color: #666; font-style: italic;">${data.pinyin}</div>
+                                <div style="color: #333;">${data.indonesia}</div>
+                            </div>
+                        `;
+                    });
+                }
+                
+                document.getElementById('daftarKosaKata').innerHTML = html;
+            } catch (error) {
+                console.error("Error:", error);
+            }
+        }
 
-  <!-- Tambahkan juga CSS ini di file style.css -->
-  <style>
-    /* Style untuk form tambah vocab */
-    .add-vocab-section {
-      background: #f8f9fa;
-      padding: 1.5rem;
-      margin: 1.5rem 0;
-      border-radius: 10px;
-      border: 2px solid #e9ecef;
-    }
-
-    .add-vocab-section h2 {
-      margin-top: 0;
-      color: #333;
-      text-align: center;
-    }
-
-    .vocab-form {
-      max-width: 400px;
-      margin: 0 auto;
-    }
-
-    .form-group {
-      margin-bottom: 1rem;
-    }
-
-    .form-group input {
-      width: 100%;
-      padding: 0.75rem;
-      border: 2px solid #ddd;
-      border-radius: 5px;
-      font-size: 1rem;
-      transition: border-color 0.3s;
-      box-sizing: border-box;
-    }
-
-    .form-group input:focus {
-      outline: none;
-      border-color: #4CAF50;
-    }
-
-    .btn-add {
-      background: #4CAF50;
-      color: white;
-      padding: 0.75rem 2rem;
-      border: none;
-      border-radius: 5px;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: background 0.3s;
-      width: 100%;
-    }
-
-    .btn-add:hover {
-      background: #45a049;
-    }
-
-    /* Style untuk entry yang sudah ada */
-    .entry {
-      padding: 1rem;
-      margin: 0.5rem 0;
-      background: white;
-      border-radius: 5px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-
-    .entry strong {
-      color: #2c3e50;
-      font-size: 1.2em;
-    }
-  </style>
+        // JALANKAN FUNGSI PERTAMA KALI
+        tampilkanKosaKata();
+    </script>
 </body>
 </html>
