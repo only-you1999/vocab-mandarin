@@ -1,4 +1,294 @@
-<script>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学习中文词汇网站</title>
+    <!-- Tambahkan Firebase SDK -->
+    <title>Kosakata Mandarin - Auto Create Collection</title>
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: #c62828;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+        }
+        
+        .input-section, .vocab-list {
+            flex: 1;
+            min-width: 300px;
+            background-color: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        h2 {
+            color: #c62828;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        button {
+            background-color: #c62828;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #b71c1c;
+        }
+        
+        .search-box {
+            margin-bottom: 20px;
+        }
+        
+        .vocab-item {
+            background-color: #f9f9f9;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #c62828;
+            position: relative;
+        }
+        
+        .vocab-chinese {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+        
+        .vocab-pinyin {
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .vocab-meaning {
+            font-weight: 600;
+        }
+        
+        .vocab-example {
+            margin-top: 8px;
+            font-style: italic;
+            color: #555;
+        }
+        
+        .delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #666;
+            padding: 5px 10px;
+            font-size: 0.9rem;
+            border-radius: 4px;
+        }
+        
+        .delete-btn:hover {
+            background-color: #d32f2f;
+        }
+        
+        .empty-message {
+            text-align: center;
+            color: #888;
+            padding: 20px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+        }
+        body { font-family: Arial; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .status { padding: 15px; margin: 20px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .loading { background: #fff3cd; color: #856404; }
+        .form-group { margin-bottom: 15px; }
+        input, textarea { width: 100%; padding: 10px; margin-top: 5px; }
+        button { background: #c62828; color: white; border: none; padding: 12px 24px; cursor: pointer; font-size: 16px; }
+        .vocab-item { background: #f9f9f9; padding: 20px; margin: 15px 0; border-radius: 8px; border-left: 5px solid #c62828; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>周庆祥与温菲琳学习中文词汇网站</h1>
+            <p class="subtitle">容易增加与学习中文词汇 - 🔥 Data Tersimpan di Firebase</p>
+            <p style="margin-top: 10px; font-size: 0.9rem; background-color: rgba(255,255,255,0.2); padding: 5px; border-radius: 4px;">
+                Data sekarang bisa diakses dari mana saja! 🚀
+            </p>
+        </header>
+        
+        <div class="main-content">
+            <section class="input-section">
+                <h2>增加新词汇</h2>
+                <form id="vocab-form">
+                    <div class="form-group">
+                        <label for="chinese">词汇 (Kata)</label>
+                        <input type="text" id="chinese" placeholder="Contoh: 你好" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="pinyin">Pinyin</label>
+                        <input type="text" id="pinyin" placeholder="Contoh: nǐ hǎo" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="meaning">翻译印尼语 (Arti Indonesia)</label>
+                        <input type="text" id="meaning" placeholder="Contoh: halo" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="example">Contoh Penggunaan (opsional)</label>
+                        <textarea id="example" placeholder="Contoh: 你好吗？ (nǐ hǎo ma?) - Apa kabar?" rows="3"></textarea>
+                    </div>
+                    
+                    <button type="submit" id="submit-btn">Simpan Kosakata</button>
+                </form>
+            </section>
+            
+            <section class="vocab-list">
+                <h2>Daftar Kosakata</h2>
+                
+                <div class="search-box">
+                    <input type="text" id="search" placeholder="Cari kosakata...">
+    <h1>📚 周庆祥与温菲琳 - Kosakata Mandarin</h1>
+    
+    <div id="status" class="status loading">
+        🔄 Memeriksa koneksi Firebase...
+    </div>
+    
+    <div style="display: flex; gap: 30px; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 300px;">
+            <h2>➕ Tambah Kosakata Baru</h2>
+            <form id="vocab-form">
+                <div class="form-group">
+                    <label><strong>汉字 (Hanzi):</strong></label>
+                    <input type="text" id="chinese" placeholder="你好" required>
+                </div>
+                
+                <div id="vocab-container">
+                    <div class="loading" id="loading-message">
+                        Memuat data dari Firebase...
+                    </div>
+                    <div class="empty-message" id="empty-message" style="display: none;">
+                        Belum ada kosakata. Silakan tambahkan kosakata baru.
+                    </div>
+                <div class="form-group">
+                    <label><strong>拼音 (Pinyin):</strong></label>
+                    <input type="text" id="pinyin" placeholder="nǐ hǎo" required>
+                </div>
+                <div class="form-group">
+                    <label><strong>Arti Indonesia:</strong></label>
+                    <input type="text" id="meaning" placeholder="halo" required>
+                </div>
+            </section>
+                <div class="form-group">
+                    <label><strong>Contoh Kalimat (opsional):</strong></label>
+                    <textarea id="example" rows="3" placeholder="你好吗？ - Apa kabar?"></textarea>
+                </div>
+                <button type="submit" id="submit-btn">💾 Simpan Kosakata</button>
+            </form>
+            
+            <div style="margin-top: 30px; padding: 15px; background: #e8f4fd; border-radius: 8px;">
+                <h3>🛠️ Debug Tools</h3>
+                <button onclick="createTestData()" style="background: #2196F3; margin-right: 10px;">➕ Buat Data Test</button>
+                <button onclick="checkFirestore()" style="background: #4CAF50;">🔍 Cek Firestore</button>
+                <button onclick="clearAllData()" style="background: #f44336;">🗑️ Reset Data</button>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2025 Pembelajaran Kosakata Mandarin. Semua hak dilindungi.</p>
+            <p style="font-size: 0.9rem; margin-top: 5px;">Data tersimpan di Firebase | Dibuat oleh 周庆祥 & 温菲琳</p>
+        </footer>
+        <div style="flex: 1; min-width: 300px;">
+            <h2>📖 Daftar Kosakata</h2>
+            <div id="vocab-container">
+                <p>Memuat data...</p>
+            </div>
+        </div>
+    </div>
+
+ <script>
     // ====================
     // FIREBASE CONFIG
     // ====================
