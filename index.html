@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>学习中文词汇网站</title>
+    <!-- Tambahkan Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -110,6 +114,7 @@
             margin-bottom: 15px;
             border-radius: 6px;
             border-left: 4px solid #c62828;
+            position: relative;
         }
         
         .vocab-chinese {
@@ -132,6 +137,20 @@
             color: #555;
         }
         
+        .delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #666;
+            padding: 5px 10px;
+            font-size: 0.9rem;
+            border-radius: 4px;
+        }
+        
+        .delete-btn:hover {
+            background-color: #d32f2f;
+        }
+        
         .empty-message {
             text-align: center;
             color: #888;
@@ -141,6 +160,12 @@
         footer {
             text-align: center;
             margin-top: 40px;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .loading {
+            text-align: center;
             padding: 20px;
             color: #666;
         }
@@ -156,7 +181,10 @@
     <div class="container">
         <header>
             <h1>周庆祥与温菲琳学习中文词汇网站</h1>
-            <p class="subtitle">容易增加与学习中文词汇</p>
+            <p class="subtitle">容易增加与学习中文词汇 - 🔥 Data Tersimpan di Firebase</p>
+            <p style="margin-top: 10px; font-size: 0.9rem; background-color: rgba(255,255,255,0.2); padding: 5px; border-radius: 4px;">
+                Data sekarang bisa diakses dari mana saja! 🚀
+            </p>
         </header>
         
         <div class="main-content">
@@ -164,7 +192,7 @@
                 <h2>增加新词汇</h2>
                 <form id="vocab-form">
                     <div class="form-group">
-                        <label for="chinese">词汇</label>
+                        <label for="chinese">词汇 (Kata)</label>
                         <input type="text" id="chinese" placeholder="Contoh: 你好" required>
                     </div>
                     
@@ -174,16 +202,16 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="meaning">翻译印尼语</label>
+                        <label for="meaning">翻译印尼语 (Arti Indonesia)</label>
                         <input type="text" id="meaning" placeholder="Contoh: halo" required>
                     </div>
                     
                     <div class="form-group">
                         <label for="example">Contoh Penggunaan (opsional)</label>
-                        <textarea id="example" placeholder="Contoh: 你好吗？ (nǐ hǎo ma?) - Apa kabar?"></textarea>
+                        <textarea id="example" placeholder="Contoh: 你好吗？ (nǐ hǎo ma?) - Apa kabar?" rows="3"></textarea>
                     </div>
                     
-                    <button type="submit">Simpan Kosakata</button>
+                    <button type="submit" id="submit-btn">Simpan Kosakata</button>
                 </form>
             </section>
             
@@ -195,8 +223,10 @@
                 </div>
                 
                 <div id="vocab-container">
-                    <!-- Daftar kosakata akan ditampilkan di sini -->
-                    <div class="empty-message" id="empty-message">
+                    <div class="loading" id="loading-message">
+                        Memuat data dari Firebase...
+                    </div>
+                    <div class="empty-message" id="empty-message" style="display: none;">
                         Belum ada kosakata. Silakan tambahkan kosakata baru.
                     </div>
                 </div>
@@ -205,24 +235,43 @@
         
         <footer>
             <p>&copy; 2025 Pembelajaran Kosakata Mandarin. Semua hak dilindungi.</p>
+            <p style="font-size: 0.9rem; margin-top: 5px;">Data tersimpan di Firebase | Dibuat oleh 周庆祥 & 温菲琳</p>
         </footer>
     </div>
 
     <script>
+        // ============================================
+        // 🔥 STEP 1: KONFIGURASI FIREBASE - GANTI INI!
+        // ============================================
+        // Buka Firebase Console -> Project Settings -> Web App
+        // Copy konfigurasi di sini:
+        const firebaseConfig = {
+            apiKey: "AIzaSyDk1FFrE2-vd-jAfiHh9T1HZ7hAq46p6Vk",
+            authDomain: "kosakata-mandarin-chou-wen.firebaseapp.com",
+            projectId: "kosakata-mandarin-chou-wen",
+            storageBucket: "kosakata-mandarin-chou-wen.firebasestorage.app",
+            messagingSenderId: "301154311991",
+            appId: "1:301154311991:web:261a08cc3f2f2b8ac2f3f2"
+        };
+
+        // Inisialisasi Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const vocabCollection = db.collection('vocabularies');
+
         document.addEventListener('DOMContentLoaded', function() {
             const vocabForm = document.getElementById('vocab-form');
             const searchInput = document.getElementById('search');
             const vocabContainer = document.getElementById('vocab-container');
+            const loadingMessage = document.getElementById('loading-message');
             const emptyMessage = document.getElementById('empty-message');
+            const submitBtn = document.getElementById('submit-btn');
             
-            // Inisialisasi data kosakata dari localStorage atau array kosong
-            let vocabularies = JSON.parse(localStorage.getItem('mandarinVocabularies')) || [];
-            
-            // Tampilkan kosakata saat pertama kali memuat halaman
-            displayVocabularies(vocabularies);
+            // Load data dari Firestore saat halaman dimuat
+            loadVocabularies();
             
             // Event listener untuk form tambah kosakata
-            vocabForm.addEventListener('submit', function(e) {
+            vocabForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
                 const chinese = document.getElementById('chinese').value.trim();
@@ -231,41 +280,80 @@
                 const example = document.getElementById('example').value.trim();
                 
                 if (chinese && pinyin && meaning) {
+                    // Disable button saat proses
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Menyimpan...';
+                    
                     const newVocab = {
-                        id: Date.now(),
                         chinese,
                         pinyin,
                         meaning,
-                        example
+                        example: example || '',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        addedBy: "User"
                     };
                     
-                    vocabularies.push(newVocab);
-                    saveVocabularies();
-                    displayVocabularies(vocabularies);
-                    
-                    // Reset form
-                    vocabForm.reset();
+                    try {
+                        await vocabCollection.add(newVocab);
+                        alert('✅ Kosakata berhasil disimpan!');
+                        vocabForm.reset();
+                        loadVocabularies();
+                    } catch (error) {
+                        alert('❌ Error: ' + error.message);
+                        console.error('Error saving:', error);
+                    } finally {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Simpan Kosakata';
+                    }
+                } else {
+                    alert('Harap isi kolom yang wajib diisi!');
                 }
             });
             
             // Event listener untuk pencarian
             searchInput.addEventListener('input', function() {
                 const searchTerm = this.value.toLowerCase();
-                const filteredVocab = vocabularies.filter(vocab => 
-                    vocab.chinese.toLowerCase().includes(searchTerm) ||
-                    vocab.pinyin.toLowerCase().includes(searchTerm) ||
-                    vocab.meaning.toLowerCase().includes(searchTerm)
-                );
-                
-                displayVocabularies(filteredVocab);
+                filterVocabularies(searchTerm);
             });
+            
+            // Fungsi untuk memuat kosakata dari Firestore
+            async function loadVocabularies() {
+                try {
+                    loadingMessage.style.display = 'block';
+                    emptyMessage.style.display = 'none';
+                    
+                    const snapshot = await vocabCollection
+                        .orderBy('createdAt', 'desc')
+                        .get();
+                    
+                    const vocabularies = [];
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        vocabularies.push({
+                            id: doc.id,
+                            chinese: data.chinese || '',
+                            pinyin: data.pinyin || '',
+                            meaning: data.meaning || '',
+                            example: data.example || '',
+                            createdAt: data.createdAt ? data.createdAt.toDate().toLocaleDateString('id-ID') : 'Tanpa tanggal'
+                        });
+                    });
+                    
+                    displayVocabularies(vocabularies);
+                } catch (error) {
+                    console.error('Error loading data:', error);
+                    loadingMessage.innerHTML = '❌ Error memuat data. Coba refresh halaman.<br>' + error.message;
+                } finally {
+                    loadingMessage.style.display = 'none';
+                }
+            }
             
             // Fungsi untuk menampilkan kosakata
             function displayVocabularies(vocabList) {
                 if (vocabList.length === 0) {
                     vocabContainer.innerHTML = '';
-                    vocabContainer.appendChild(emptyMessage);
                     emptyMessage.style.display = 'block';
+                    vocabContainer.appendChild(emptyMessage);
                     return;
                 }
                 
@@ -273,29 +361,66 @@
                 
                 const vocabHTML = vocabList.map(vocab => `
                     <div class="vocab-item" data-id="${vocab.id}">
+                        <button class="delete-btn" onclick="deleteVocab('${vocab.id}')">Hapus</button>
                         <div class="vocab-chinese">${vocab.chinese}</div>
                         <div class="vocab-pinyin">${vocab.pinyin}</div>
                         <div class="vocab-meaning">${vocab.meaning}</div>
                         ${vocab.example ? `<div class="vocab-example">${vocab.example}</div>` : ''}
-                        <button onclick="deleteVocab(${vocab.id})" style="margin-top: 10px; background-color: #666; padding: 5px 10px; font-size: 0.9rem;">Hapus</button>
+                        <div style="font-size: 0.8rem; color: #999; margin-top: 8px;">
+                            Ditambahkan: ${vocab.createdAt}
+                        </div>
                     </div>
                 `).join('');
                 
                 vocabContainer.innerHTML = vocabHTML;
             }
             
-            // Fungsi untuk menyimpan kosakata ke localStorage
-            function saveVocabularies() {
-                localStorage.setItem('mandarinVocabularies', JSON.stringify(vocabularies));
+            // Fungsi untuk filter/search
+            function filterVocabularies(searchTerm) {
+                if (!searchTerm) {
+                    loadVocabularies();
+                    return;
+                }
+                
+                // Filter client-side
+                const items = vocabContainer.querySelectorAll('.vocab-item');
+                let visibleCount = 0;
+                
+                items.forEach(item => {
+                    const text = item.textContent.toLowerCase();
+                    if (text.includes(searchTerm)) {
+                        item.style.display = 'block';
+                        visibleCount++;
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+                
+                // Tampilkan pesan jika tidak ada hasil
+                if (visibleCount === 0) {
+                    emptyMessage.textContent = `Tidak ditemukan kosakata dengan kata kunci: "${searchTerm}"`;
+                    emptyMessage.style.display = 'block';
+                } else {
+                    emptyMessage.style.display = 'none';
+                }
             }
             
-            // Fungsi untuk menghapus kosakata (dideklarasikan secara global agar bisa dipanggil dari onclick)
-            window.deleteVocab = function(id) {
+            // Fungsi global untuk delete
+            window.deleteVocab = async function(id) {
                 if (confirm('Apakah Anda yakin ingin menghapus kosakata ini?')) {
-                    vocabularies = vocabularies.filter(vocab => vocab.id !== id);
-                    saveVocabularies();
-                    displayVocabularies(vocabularies);
+                    try {
+                        await vocabCollection.doc(id).delete();
+                        alert('✅ Kosakata berhasil dihapus!');
+                        loadVocabularies();
+                    } catch (error) {
+                        alert('❌ Error: ' + error.message);
+                    }
                 }
+            };
+            
+            // Fitur untuk refresh data
+            window.refreshData = function() {
+                loadVocabularies();
             };
         });
     </script>
