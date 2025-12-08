@@ -240,26 +240,37 @@
     </div>
 
     <script>
+         <script>
+        console.log("🚀 Website dimuat...");
+        
         // ============================================
-        // 🔥 STEP 1: KONFIGURASI FIREBASE - GANTI INI!
+        // 🔥 KONFIGURASI FIREBASE
         // ============================================
-        // Buka Firebase Console -> Project Settings -> Web App
-        // Copy konfigurasi di sini:
         const firebaseConfig = {
-          apiKey: "AIzaSyCeQBYt2evJIFkBir5XHd4x4Lldnkvo_Sk",
-          authDomain: "kosakata-mandarin-chou-wen.firebaseapp.com",
-          projectId: "kosakata-mandarin-chou-wen",
-          storageBucket: "kosakata-mandarin-chou-wen.firebasestorage.app",
-          messagingSenderId: "634892121146",
-          appId: "1:634892121146:web:ec0f8a2e769d90fa52f103"
-     };
+            apiKey: "AIzaSyCeQBYt2evJIFkBir5XHd4x4Lldnkvo_Sk",
+            authDomain: "kosakata-mandarin-chou-wen.firebaseapp.com",
+            projectId: "kosakata-mandarin-chou-wen",
+            storageBucket: "kosakata-mandarin-chou-wen.firebasestorage.app",
+            messagingSenderId: "634892121146",
+            appId: "1:634892121146:web:ec0f8a2e769d90fa52f103"
+        };
+
+        console.log("✅ Firebase Config:", firebaseConfig);
 
         // Inisialisasi Firebase
-        firebase.initializeApp(firebaseConfig);
+        try {
+            firebase.initializeApp(firebaseConfig);
+            console.log("✅ Firebase berhasil diinisialisasi");
+        } catch (error) {
+            console.error("❌ Error inisialisasi Firebase:", error);
+        }
+
         const db = firebase.firestore();
         const vocabCollection = db.collection('vocabularies');
 
         document.addEventListener('DOMContentLoaded', function() {
+            console.log("✅ DOM siap");
+            
             const vocabForm = document.getElementById('vocab-form');
             const searchInput = document.getElementById('search');
             const vocabContainer = document.getElementById('vocab-container');
@@ -267,20 +278,25 @@
             const emptyMessage = document.getElementById('empty-message');
             const submitBtn = document.getElementById('submit-btn');
             
-            // Load data dari Firestore saat halaman dimuat
+            // Test koneksi Firebase
+            testFirebaseConnection();
+            
+            // Load data awal
             loadVocabularies();
             
-            // Event listener untuk form tambah kosakata
+            // Event listener untuk form
             vocabForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
+                console.log("📝 Form disubmit");
                 
                 const chinese = document.getElementById('chinese').value.trim();
                 const pinyin = document.getElementById('pinyin').value.trim();
                 const meaning = document.getElementById('meaning').value.trim();
                 const example = document.getElementById('example').value.trim();
                 
+                console.log("Data form:", { chinese, pinyin, meaning, example });
+                
                 if (chinese && pinyin && meaning) {
-                    // Disable button saat proses
                     submitBtn.disabled = true;
                     submitBtn.textContent = 'Menyimpan...';
                     
@@ -289,45 +305,78 @@
                         pinyin,
                         meaning,
                         example: example || '',
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        addedBy: "User"
+                        createdAt: new Date().toISOString(),
+                        addedBy: "Website User"
                     };
                     
+                    console.log("📤 Mengirim ke Firebase:", newVocab);
+                    
                     try {
-                        await vocabCollection.add(newVocab);
-                        alert('✅ Kosakata berhasil disimpan!');
+                        // Coba simpan ke Firebase
+                        const docRef = await vocabCollection.add(newVocab);
+                        console.log("✅ Berhasil disimpan! ID:", docRef.id);
+                        
+                        alert('✅ Kosakata berhasil disimpan! ID: ' + docRef.id);
                         vocabForm.reset();
+                        
+                        // Load ulang data
                         loadVocabularies();
+                        
                     } catch (error) {
-                        alert('❌ Error: ' + error.message);
-                        console.error('Error saving:', error);
+                        console.error("❌ Error menyimpan:", error);
+                        alert('❌ Gagal menyimpan: ' + error.message);
+                        
+                        // Coba simpan ke localStorage sebagai backup
+                        console.log("🔄 Mencoba backup ke localStorage...");
+                        saveToLocalStorage(newVocab);
                     } finally {
                         submitBtn.disabled = false;
                         submitBtn.textContent = 'Simpan Kosakata';
                     }
                 } else {
-                    alert('Harap isi kolom yang wajib diisi!');
+                    alert('Harap isi semua kolom wajib!');
                 }
             });
             
-            // Event listener untuk pencarian
-            searchInput.addEventListener('input', function() {
-                const searchTerm = this.value.toLowerCase();
-                filterVocabularies(searchTerm);
-            });
+            // Fungsi test koneksi Firebase
+            async function testFirebaseConnection() {
+                console.log("🔌 Testing koneksi Firebase...");
+                try {
+                    // Coba baca 1 dokumen
+                    const testQuery = await vocabCollection.limit(1).get();
+                    console.log("✅ Koneksi Firebase OK. Dokumen ada:", testQuery.size);
+                    return true;
+                } catch (error) {
+                    console.error("❌ Koneksi Firebase error:", error);
+                    return false;
+                }
+            }
             
-            // Fungsi untuk memuat kosakata dari Firestore
+            // Fungsi load data
             async function loadVocabularies() {
+                console.log("🔄 Memuat data...");
+                
                 try {
                     loadingMessage.style.display = 'block';
                     emptyMessage.style.display = 'none';
                     
+                    console.log("📡 Mengambil data dari Firebase...");
                     const snapshot = await vocabCollection
                         .orderBy('createdAt', 'desc')
                         .get();
                     
+                    console.log("✅ Data diterima:", snapshot.size, "dokumen");
+                    
+                    if (snapshot.size === 0) {
+                        console.log("📭 Tidak ada data di Firebase");
+                        // Coba load dari localStorage
+                        loadFromLocalStorage();
+                        return;
+                    }
+                    
                     const vocabularies = [];
                     snapshot.forEach(doc => {
+                        console.log("📄 Dokumen:", doc.id, "=>", doc.data());
                         const data = doc.data();
                         vocabularies.push({
                             id: doc.id,
@@ -335,21 +384,67 @@
                             pinyin: data.pinyin || '',
                             meaning: data.meaning || '',
                             example: data.example || '',
-                            createdAt: data.createdAt ? data.createdAt.toDate().toLocaleDateString('id-ID') : 'Tanpa tanggal'
+                            createdAt: data.createdAt ? 
+                                (typeof data.createdAt === 'string' ? data.createdAt : 
+                                 data.createdAt.toDate ? data.createdAt.toDate().toLocaleDateString('id-ID') : 
+                                 'Tanpa tanggal') : 'Tanpa tanggal'
                         });
                     });
                     
                     displayVocabularies(vocabularies);
+                    
                 } catch (error) {
-                    console.error('Error loading data:', error);
-                    loadingMessage.innerHTML = '❌ Error memuat data. Coba refresh halaman.<br>' + error.message;
+                    console.error("❌ Error memuat dari Firebase:", error);
+                    loadingMessage.innerHTML = '❌ Error: ' + error.message + 
+                        '<br>Coba refresh halaman atau cek koneksi internet.';
+                    
+                    // Coba load dari localStorage
+                    loadFromLocalStorage();
                 } finally {
                     loadingMessage.style.display = 'none';
                 }
             }
             
-            // Fungsi untuk menampilkan kosakata
+            // Fungsi backup ke localStorage
+            function saveToLocalStorage(vocab) {
+                try {
+                    let localVocab = JSON.parse(localStorage.getItem('mandarinVocabularies')) || [];
+                    vocab.id = 'local_' + Date.now();
+                    localVocab.push(vocab);
+                    localStorage.setItem('mandarinVocabularies', JSON.stringify(localVocab));
+                    console.log("💾 Disimpan ke localStorage:", vocab);
+                    alert('⚠️ Data disimpan ke localStorage (offline mode)');
+                    loadFromLocalStorage();
+                } catch (error) {
+                    console.error("❌ Error localStorage:", error);
+                }
+            }
+            
+            // Fungsi load dari localStorage
+            function loadFromLocalStorage() {
+                try {
+                    const localVocab = JSON.parse(localStorage.getItem('mandarinVocabularies')) || [];
+                    console.log("📂 Data dari localStorage:", localVocab.length, "item");
+                    
+                    if (localVocab.length > 0) {
+                        displayVocabularies(localVocab);
+                        emptyMessage.innerHTML = `
+                            Data dari localStorage (offline mode)<br>
+                            <small>Firebase mungkin sedang error</small>
+                        `;
+                    } else {
+                        emptyMessage.textContent = 'Belum ada kosakata. Silakan tambahkan!';
+                        emptyMessage.style.display = 'block';
+                    }
+                } catch (error) {
+                    console.error("❌ Error load localStorage:", error);
+                }
+            }
+            
+            // Fungsi display data
             function displayVocabularies(vocabList) {
+                console.log("🎨 Menampilkan", vocabList.length, "item");
+                
                 if (vocabList.length === 0) {
                     vocabContainer.innerHTML = '';
                     emptyMessage.style.display = 'block';
@@ -367,62 +462,69 @@
                         <div class="vocab-meaning">${vocab.meaning}</div>
                         ${vocab.example ? `<div class="vocab-example">${vocab.example}</div>` : ''}
                         <div style="font-size: 0.8rem; color: #999; margin-top: 8px;">
-                            Ditambahkan: ${vocab.createdAt}
+                            Ditambahkan: ${vocab.createdAt || 'Tanpa tanggal'}
+                            ${vocab.id.startsWith('local_') ? ' (Local)' : ''}
                         </div>
                     </div>
                 `).join('');
                 
                 vocabContainer.innerHTML = vocabHTML;
+                console.log("✅ Display selesai");
             }
             
-            // Fungsi untuk filter/search
-            function filterVocabularies(searchTerm) {
-                if (!searchTerm) {
-                    loadVocabularies();
-                    return;
-                }
+            // Fungsi delete
+            window.deleteVocab = async function(id) {
+                console.log("🗑️ Menghapus:", id);
                 
-                // Filter client-side
+                if (confirm('Hapus kosakata ini?')) {
+                    try {
+                        if (id.startsWith('local_')) {
+                            // Hapus dari localStorage
+                            let localVocab = JSON.parse(localStorage.getItem('mandarinVocabularies')) || [];
+                            localVocab = localVocab.filter(v => v.id !== id);
+                            localStorage.setItem('mandarinVocabularies', JSON.stringify(localVocab));
+                            loadFromLocalStorage();
+                        } else {
+                            // Hapus dari Firebase
+                            await vocabCollection.doc(id).delete();
+                            loadVocabularies();
+                        }
+                        alert('✅ Dihapus!');
+                    } catch (error) {
+                        alert('❌ Gagal menghapus: ' + error.message);
+                    }
+                }
+            };
+            
+            // Event listener untuk search
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
                 const items = vocabContainer.querySelectorAll('.vocab-item');
-                let visibleCount = 0;
+                let found = false;
                 
                 items.forEach(item => {
                     const text = item.textContent.toLowerCase();
                     if (text.includes(searchTerm)) {
                         item.style.display = 'block';
-                        visibleCount++;
+                        found = true;
                     } else {
                         item.style.display = 'none';
                     }
                 });
                 
-                // Tampilkan pesan jika tidak ada hasil
-                if (visibleCount === 0) {
-                    emptyMessage.textContent = `Tidak ditemukan kosakata dengan kata kunci: "${searchTerm}"`;
+                if (!found && searchTerm) {
+                    emptyMessage.textContent = `Tidak ditemukan: "${searchTerm}"`;
                     emptyMessage.style.display = 'block';
-                } else {
-                    emptyMessage.style.display = 'none';
                 }
-            }
-            
-            // Fungsi global untuk delete
-            window.deleteVocab = async function(id) {
-                if (confirm('Apakah Anda yakin ingin menghapus kosakata ini?')) {
-                    try {
-                        await vocabCollection.doc(id).delete();
-                        alert('✅ Kosakata berhasil dihapus!');
-                        loadVocabularies();
-                    } catch (error) {
-                        alert('❌ Error: ' + error.message);
-                    }
-                }
-            };
-            
-            // Fitur untuk refresh data
-            window.refreshData = function() {
-                loadVocabularies();
-            };
+            });
         });
+        
+        // Tombol untuk debug
+        window.debugInfo = function() {
+            console.log("=== DEBUG INFO ===");
+            console.log("Firebase Config:", firebaseConfig);
+            console.log("Firebase App:", firebase.apps);
+            console.log("LocalStorage data:", JSON.parse(localStorage.getItem('mandarinVocabularies')));
+            alert('Cek Console (F12) untuk info debug');
+        };
     </script>
-</body>
-</html>
