@@ -4,9 +4,46 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>学习中文词汇网站</title>
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
+    
+    <!-- Firebase SDK - Multi Source -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    
+    <!-- Backup CDN -->
+    <script>
+        window.firebaseLoaded = false;
+        
+        // Cek setelah 3 detik
+        setTimeout(function() {
+            if (typeof firebase === 'undefined' || typeof firebase.initializeApp === 'undefined') {
+                console.log("Firebase gstatic gagal, loading dari CDNJS...");
+                loadFirebaseFromCDNJS();
+            } else {
+                window.firebaseLoaded = true;
+                console.log("✅ Firebase SDK loaded from gstatic");
+            }
+        }, 3000);
+        
+        function loadFirebaseFromCDNJS() {
+            // Load dari CDNJS sebagai backup
+            var script1 = document.createElement('script');
+            script1.src = 'https://cdnjs.cloudflare.com/ajax/libs/firebase/8.10.0/firebase-app.min.js';
+            script1.onload = function() {
+                console.log("✅ firebase-app loaded from CDNJS");
+                var script2 = document.createElement('script');
+                script2.src = 'https://cdnjs.cloudflare.com/ajax/libs/firebase/8.10.0/firebase-firestore.min.js';
+                script2.onload = function() {
+                    console.log("✅ firebase-firestore loaded from CDNJS");
+                    window.firebaseLoaded = true;
+                    if (window.firebaseReadyCallback) {
+                        window.firebaseReadyCallback();
+                    }
+                };
+                document.head.appendChild(script2);
+            };
+            document.head.appendChild(script1);
+        }
+    </script>
     
     <style>
         * {
@@ -170,12 +207,11 @@
             color: #666;
         }
         
-        .status-message {
-            text-align: center;
+        .status-box {
             padding: 10px;
             margin: 10px 0;
             border-radius: 5px;
-            display: none;
+            text-align: center;
         }
         
         .status-success {
@@ -188,6 +224,12 @@
             background-color: #f8d7da;
             color: #721c24;
             border: 1px solid #f5c6cb;
+        }
+        
+        .status-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
         }
         
         @media (max-width: 768px) {
@@ -207,8 +249,10 @@
             </p>
         </header>
         
-        <!-- Status Message -->
-        <div id="status-message" class="status-message"></div>
+        <!-- Status Display -->
+        <div id="status" class="status-box status-info">
+            🔄 Memuat Firebase SDK...
+        </div>
         
         <div class="main-content">
             <section class="input-section">
@@ -234,7 +278,7 @@
                         <textarea id="example" placeholder="Contoh: 你好吗？ (nǐ hǎo ma?) - Apa kabar?" rows="3"></textarea>
                     </div>
                     
-                    <button type="submit" id="submit-btn">Simpan Kosakata</button>
+                    <button type="submit" id="submit-btn" disabled>Loading Firebase...</button>
                 </form>
             </section>
             
@@ -242,12 +286,12 @@
                 <h2>Daftar Kosakata</h2>
                 
                 <div class="search-box">
-                    <input type="text" id="search" placeholder="Cari kosakata...">
+                    <input type="text" id="search" placeholder="Cari kosakata..." disabled>
                 </div>
                 
                 <div id="vocab-container">
                     <div class="loading" id="loading-message">
-                        Memuat data dari Firebase...
+                        Menunggu Firebase SDK...
                     </div>
                     <div class="empty-message" id="empty-message" style="display: none;">
                         Belum ada kosakata. Silakan tambahkan kosakata baru.
@@ -275,91 +319,131 @@
             appId: "1:634892121146:web:ec0f8a2e769d90fa52f103"
         };
         
-        // Variabel global
+        // Global variables
         let db = null;
         let vocabCollection = null;
-        let isFirebaseReady = false;
+        let appInitialized = false;
         
-        // Fungsi untuk menampilkan status
-        function showStatus(message, type = 'info') {
-            const statusEl = document.getElementById('status-message');
+        // Update status display
+        function updateStatus(message, type = 'info') {
+            const statusEl = document.getElementById('status');
             if (statusEl) {
                 statusEl.textContent = message;
-                statusEl.className = 'status-message';
+                statusEl.className = 'status-box';
                 
-                if (type === 'success') {
-                    statusEl.classList.add('status-success');
-                } else if (type === 'error') {
-                    statusEl.classList.add('status-error');
-                }
+                if (type === 'success') statusEl.classList.add('status-success');
+                else if (type === 'error') statusEl.classList.add('status-error');
+                else if (type === 'info') statusEl.classList.add('status-info');
                 
-                statusEl.style.display = 'block';
-                
-                // Auto hide setelah 5 detik untuk success
-                if (type === 'success') {
-                    setTimeout(() => {
-                        statusEl.style.display = 'none';
-                    }, 5000);
-                }
+                console.log("Status:", message);
             }
         }
         
-        // Inisialisasi Firebase
-        function initializeFirebase() {
+        // Initialize Firebase App
+        function initializeFirebaseApp() {
             try {
-                // Cek jika Firebase sudah diinisialisasi
-                if (!firebase.apps.length) {
-                    firebase.initializeApp(firebaseConfig);
-                    console.log('✅ Firebase diinisialisasi');
+                console.log("Initializing Firebase...");
+                
+                // Check if firebase is available
+                if (typeof firebase === 'undefined') {
+                    updateStatus("❌ Firebase SDK belum tersedia. Cek koneksi internet.", 'error');
+                    return false;
                 }
                 
-                db = firebase.firestore();
-                vocabCollection = db.collection('vocabularies');
-                isFirebaseReady = true;
+                // Check if already initialized
+                if (firebase.apps.length > 0) {
+                    console.log("Firebase already initialized");
+                    db = firebase.firestore();
+                } else {
+                    // Initialize new app
+                    const app = firebase.initializeApp(firebaseConfig);
+                    console.log("✅ Firebase App initialized:", app.name);
+                    db = firebase.firestore();
+                }
                 
-                console.log('✅ Firestore siap digunakan');
-                showStatus('✅ Firebase terhubung! Data tersimpan di cloud.', 'success');
+                vocabCollection = db.collection('vocabularies');
+                appInitialized = true;
+                
+                updateStatus("✅ Firebase terhubung! Siap menyimpan data.", 'success');
+                
+                // Enable form
+                document.getElementById('submit-btn').disabled = false;
+                document.getElementById('submit-btn').textContent = 'Simpan Kosakata';
+                document.getElementById('search').disabled = false;
+                
+                // Load initial data
+                loadVocabularies();
                 
                 return true;
+                
             } catch (error) {
-                console.error('❌ Error inisialisasi Firebase:', error);
-                showStatus(`❌ Error: ${error.message}`, 'error');
+                console.error("Firebase initialization error:", error);
+                updateStatus(`❌ Error: ${error.message}`, 'error');
                 return false;
             }
         }
         
-        // Load data saat halaman dimuat
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('📄 Halaman dimuat');
+        // Wait for Firebase SDK to load
+        function waitForFirebase() {
+            const checkInterval = setInterval(function() {
+                if (window.firebaseLoaded) {
+                    clearInterval(checkInterval);
+                    console.log("Firebase SDK loaded, initializing app...");
+                    initializeFirebaseApp();
+                }
+                
+                // Fallback: langsung coba setelah 5 detik
+            }, 500);
             
-            // Inisialisasi Firebase
-            if (initializeFirebase()) {
-                // Load data dari Firestore
-                loadVocabularies();
-                
-                // Setup form submit
-                const vocabForm = document.getElementById('vocab-form');
-                if (vocabForm) {
-                    vocabForm.addEventListener('submit', async function(e) {
-                        e.preventDefault();
-                        await saveVocabulary();
-                    });
+            // Timeout setelah 10 detik
+            setTimeout(function() {
+                clearInterval(checkInterval);
+                if (!appInitialized) {
+                    console.log("Trying direct initialization...");
+                    if (typeof firebase !== 'undefined') {
+                        initializeFirebaseApp();
+                    } else {
+                        updateStatus("❌ Firebase gagal load. Refresh halaman.", 'error');
+                    }
                 }
-                
-                // Setup search
-                const searchInput = document.getElementById('search');
-                if (searchInput) {
-                    searchInput.addEventListener('input', function() {
-                        searchVocabularies(this.value.toLowerCase());
-                    });
-                }
+            }, 10000);
+        }
+        
+        // DOM Ready
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("DOM Content Loaded");
+            
+            // Setup form (akan di-enable setelah Firebase siap)
+            const vocabForm = document.getElementById('vocab-form');
+            if (vocabForm) {
+                vocabForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    if (appInitialized) {
+                        saveVocabulary();
+                    } else {
+                        updateStatus("❌ Firebase belum siap. Tunggu sebentar...", 'error');
+                    }
+                });
             }
+            
+            // Setup search
+            const searchInput = document.getElementById('search');
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    if (appInitialized) {
+                        searchVocabularies(this.value.toLowerCase());
+                    }
+                });
+            }
+            
+            // Start waiting for Firebase
+            waitForFirebase();
         });
         
-        // Fungsi untuk menyimpan kosakata
+        // Save vocabulary function
         async function saveVocabulary() {
-            if (!isFirebaseReady) {
-                showStatus('❌ Firebase belum siap. Silakan refresh halaman.', 'error');
+            if (!appInitialized) {
+                updateStatus("❌ Firebase belum terhubung", 'error');
                 return;
             }
             
@@ -368,21 +452,16 @@
             const meaning = document.getElementById('meaning').value.trim();
             const example = document.getElementById('example').value.trim();
             
-            // Validasi input
             if (!chinese || !pinyin || !meaning) {
-                showStatus('❌ Harap isi semua kolom yang wajib!', 'error');
+                updateStatus("❌ Harap isi semua kolom wajib!", 'error');
                 return;
             }
             
             const submitBtn = document.getElementById('submit-btn');
-            const originalText = submitBtn.textContent;
-            
-            // Disable button saat proses
             submitBtn.disabled = true;
             submitBtn.textContent = 'Menyimpan...';
             
             try {
-                // Data yang akan disimpan
                 const newVocab = {
                     chinese: chinese,
                     pinyin: pinyin,
@@ -392,70 +471,57 @@
                     addedBy: 'User'
                 };
                 
-                // Simpan ke Firestore
                 const docRef = await vocabCollection.add(newVocab);
-                console.log('✅ Kosakata disimpan dengan ID:', docRef.id);
+                console.log("✅ Saved with ID:", docRef.id);
                 
-                // Tampilkan pesan sukses
-                showStatus('✅ Kosakata berhasil disimpan!', 'success');
+                updateStatus("✅ Kosakata berhasil disimpan!", 'success');
                 
                 // Reset form
                 document.getElementById('vocab-form').reset();
                 
-                // Load ulang data
+                // Reload data
                 loadVocabularies();
                 
             } catch (error) {
-                console.error('❌ Error menyimpan kosakata:', error);
-                showStatus(`❌ Gagal menyimpan: ${error.message}`, 'error');
+                console.error("❌ Save error:", error);
+                updateStatus(`❌ Gagal menyimpan: ${error.message}`, 'error');
             } finally {
-                // Enable button kembali
                 submitBtn.disabled = false;
-                submitBtn.textContent = originalText;
+                submitBtn.textContent = 'Simpan Kosakata';
             }
         }
         
-        // Fungsi untuk memuat kosakata dari Firestore
+        // Load vocabularies
         async function loadVocabularies() {
-            if (!isFirebaseReady) return;
+            if (!appInitialized) return;
             
             const loadingMessage = document.getElementById('loading-message');
             const emptyMessage = document.getElementById('empty-message');
             const vocabContainer = document.getElementById('vocab-container');
             
             try {
-                // Tampilkan loading
                 loadingMessage.style.display = 'block';
                 emptyMessage.style.display = 'none';
                 
-                // Ambil data dari Firestore
-                const snapshot = await vocabCollection
-                    .orderBy('createdAt', 'desc')
-                    .get();
+                const snapshot = await vocabCollection.orderBy('createdAt', 'desc').get();
                 
-                console.log(`📊 Data diterima: ${snapshot.size} kosakata`);
-                
-                // Kosongkan container
-                vocabContainer.innerHTML = '';
-                
-                // Jika tidak ada data
                 if (snapshot.empty) {
                     loadingMessage.style.display = 'none';
                     emptyMessage.style.display = 'block';
                     return;
                 }
                 
-                // Tampilkan setiap kosakata
+                // Clear container
+                vocabContainer.innerHTML = '';
+                
                 snapshot.forEach(doc => {
                     const data = doc.data();
                     
-                    // Format tanggal
                     let createdAt = 'Tanpa tanggal';
                     if (data.createdAt && data.createdAt.toDate) {
                         createdAt = data.createdAt.toDate().toLocaleDateString('id-ID');
                     }
                     
-                    // Buat elemen kosakata
                     const vocabItem = document.createElement('div');
                     vocabItem.className = 'vocab-item';
                     vocabItem.innerHTML = `
@@ -472,38 +538,30 @@
                     vocabContainer.appendChild(vocabItem);
                 });
                 
-                // Sembunyikan loading
                 loadingMessage.style.display = 'none';
                 
             } catch (error) {
-                console.error('❌ Error memuat data:', error);
+                console.error("❌ Load error:", error);
                 loadingMessage.innerHTML = `❌ Error: ${error.message}`;
             }
         }
         
-        // Fungsi untuk menghapus kosakata
+        // Delete vocabulary
         async function deleteVocabulary(id) {
-            if (!isFirebaseReady) {
-                showStatus('❌ Firebase belum siap', 'error');
-                return;
-            }
+            if (!appInitialized) return;
             
-            if (!confirm('Apakah Anda yakin ingin menghapus kosakata ini?')) {
-                return;
-            }
+            if (!confirm('Hapus kosakata ini?')) return;
             
             try {
                 await vocabCollection.doc(id).delete();
-                console.log('✅ Kosakata dihapus:', id);
-                showStatus('✅ Kosakata berhasil dihapus!', 'success');
+                updateStatus("✅ Kosakata dihapus", 'success');
                 loadVocabularies();
             } catch (error) {
-                console.error('❌ Error menghapus:', error);
-                showStatus(`❌ Gagal menghapus: ${error.message}`, 'error');
+                updateStatus(`❌ Gagal menghapus: ${error.message}`, 'error');
             }
         }
         
-        // Fungsi untuk mencari kosakata
+        // Search function
         function searchVocabularies(searchTerm) {
             const vocabItems = document.querySelectorAll('.vocab-item');
             let foundCount = 0;
@@ -520,37 +578,25 @@
             
             const emptyMessage = document.getElementById('empty-message');
             if (foundCount === 0 && searchTerm) {
-                emptyMessage.textContent = `Tidak ditemukan kosakata dengan kata kunci: "${searchTerm}"`;
+                emptyMessage.textContent = `Tidak ditemukan: "${searchTerm}"`;
                 emptyMessage.style.display = 'block';
-            } else if (vocabItems.length === 0) {
-                emptyMessage.style.display = 'block';
-            } else {
-                emptyMessage.style.display = 'none';
             }
         }
         
-        // Fungsi untuk refresh data
-        window.refreshData = function() {
-            if (isFirebaseReady) {
-                loadVocabularies();
-                showStatus('🔄 Data direfresh...', 'info');
+        // Global functions
+        window.deleteVocabulary = deleteVocabulary;
+        window.forceInitialize = function() {
+            if (typeof firebase !== 'undefined') {
+                initializeFirebaseApp();
+            } else {
+                alert("Firebase SDK masih belum tersedia. Refresh halaman.");
             }
         };
         
-        // Fungsi untuk test Firebase
-        window.testFirebase = async function() {
-            try {
-                showStatus('🔄 Testing Firebase connection...', 'info');
-                const test = await vocabCollection.limit(1).get();
-                alert(`✅ Firebase Test:\n\n` +
-                      `Status: Connected ✓\n` +
-                      `Project: ${firebaseConfig.projectId}\n` +
-                      `Collection: vocabularies\n` +
-                      `Documents: ${test.size}\n\n` +
-                      `Semua sistem berjalan normal!`);
-            } catch (error) {
-                alert(`❌ Firebase Test Failed:\n\n${error.message}`);
-            }
+        // Callback when Firebase is ready
+        window.firebaseReadyCallback = function() {
+            console.log("Firebase ready callback called");
+            initializeFirebaseApp();
         };
     </script>
 </body>
