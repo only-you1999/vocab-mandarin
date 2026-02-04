@@ -109,14 +109,13 @@
         }
         
         .input-section, .vocab-list {
-            scroll-behavior: smooth;
-            flex: 1;
-            min-width: 300px;
-            background:#020617;
+            background: rgba(2,6,23,0.55);   /* transparan */
+            backdrop-filter: blur(12px);     /* efek kaca */
+            -webkit-backdrop-filter: blur(12px);
             color:#e5e7eb;
             border-radius:14px;
-            box-shadow:0 20px 40px rgba(0,0,0,0.6);
-            
+            box-shadow:0 0 40px rgba(59,130,246,0.25);
+            border:1px solid rgba(255,255,255,0.1);
             /* Tambahan agar bisa scroll */
             max-height: 600px;
             overflow-y: auto;
