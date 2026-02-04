@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>学习中文词汇网站</title>
 
-<!-- Firebase -->
+<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
@@ -158,6 +158,11 @@ color:#cbd5f5;
 font-weight:bold;
 }
 
+.vocab-example{
+font-style:italic;
+opacity:0.9;
+}
+
 .delete-btn{
 background:#2563eb;
 border:none;
@@ -198,8 +203,8 @@ flex-direction:column;
 <p class="subtitle">容易增加与学习中文词汇 - 🔥 Data Tersimpan di Firebase</p>
 </header>
 
-<div class="status-box">
-✅ Firebase terhubung! Siap menyimpan data.
+<div id="status" class="status-box">
+🔄 Menghubungkan ke Firebase...
 </div>
 
 <div class="main-content">
@@ -220,7 +225,7 @@ flex-direction:column;
 <label>Contoh</label>
 <textarea id="example"></textarea>
 
-<button onclick="saveVocabulary()">Simpan Kosakata</button>
+<button id="submit-btn">Simpan Kosakata</button>
 </div>
 
 <!-- LIST -->
@@ -228,7 +233,7 @@ flex-direction:column;
 <h2>Daftar Kosakata</h2>
 
 <div class="search-box">
-<input id="search" placeholder="Cari kosakata..." oninput="searchVocab()">
+<input id="search" placeholder="Cari kosakata...">
 </div>
 
 <div id="vocab-container"></div>
@@ -244,6 +249,7 @@ flex-direction:column;
 
 <script>
 
+/* FIREBASE CONFIG */
 const firebaseConfig = {
 apiKey: "AIzaSyCeQBYt2evJIFkBir5XHd4x4Lldnkvo_Sk",
 authDomain: "kosakata-mandarin-chou-wen.firebaseapp.com",
@@ -252,7 +258,86 @@ projectId: "kosakata-mandarin-chou-wen"
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-const col = db.collection("vocabularies");
+const vocabCollection = db.collection("vocabularies");
+
+/* STATUS */
+document.getElementById("status").innerText =
+"✅ Firebase terhubung! Siap menyimpan data.";
 
 /* SAVE */
-fun
+document.getElementById("submit-btn").onclick = async function(){
+
+const chinese = document.getElementById("chinese").value.trim();
+const pinyin = document.getElementById("pinyin").value.trim();
+const meaning = document.getElementById("meaning").value.trim();
+const example = document.getElementById("example").value.trim();
+
+if(!chinese || !pinyin || !meaning){
+alert("Harap isi kata, pinyin, dan arti!");
+return;
+}
+
+await vocabCollection.add({
+chinese,
+pinyin,
+meaning,
+example,
+createdAt: firebase.firestore.FieldValue.serverTimestamp()
+});
+
+document.getElementById("chinese").value="";
+document.getElementById("pinyin").value="";
+document.getElementById("meaning").value="";
+document.getElementById("example").value="";
+
+loadVocabularies();
+};
+
+/* LOAD */
+async function loadVocabularies(){
+const container=document.getElementById("vocab-container");
+container.innerHTML="";
+
+const snapshot = await vocabCollection
+.orderBy("createdAt","desc")
+.get();
+
+snapshot.forEach(doc=>{
+const d=doc.data();
+
+container.innerHTML+=`
+<div class="vocab-item">
+<button class="delete-btn" onclick="deleteVocab('${doc.id}')">Hapus</button>
+<div class="vocab-chinese">${d.chinese}</div>
+<div class="vocab-pinyin">${d.pinyin}</div>
+<div class="vocab-meaning">${d.meaning}</div>
+<div class="vocab-example">${d.example || ""}</div>
+</div>
+`;
+});
+}
+
+/* DELETE */
+async function deleteVocab(id){
+if(confirm("Hapus kosakata ini?")){
+await vocabCollection.doc(id).delete();
+loadVocabularies();
+}
+}
+
+/* SEARCH */
+document.getElementById("search").addEventListener("input",function(){
+const q=this.value.toLowerCase();
+document.querySelectorAll(".vocab-item").forEach(item=>{
+item.style.display = item.innerText.toLowerCase().includes(q)
+? "block" : "none";
+});
+});
+
+/* INIT */
+loadVocabularies();
+
+</script>
+
+</body>
+</html>
