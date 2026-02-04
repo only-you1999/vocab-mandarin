@@ -135,20 +135,27 @@
             font-size:1rem;
         }
         
-        button {
-            background-color: linear-gradient(90deg,#2563eb,#3b82f6);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 600;
-            transition: background-color 0.3s;
-        }
-        
-        button:hover {
-            background-color: #b71c1c;
+       button{
+            background: linear-gradient(90deg,#2563eb,#3b82f6);
+            color:white;
+            border:none;
+            padding:12px 20px;
+            border-radius:10px;
+            font-weight:600;
+            cursor:pointer;
+            transition:0.3s;
+}
+
+        button:hover{
+            background: linear-gradient(90deg,#1e40af,#2563eb);
+            transform: translateY(-1px);
+}
+
+        /* Saat disabled */
+        button:disabled{
+            background:#334155;
+            color:#94a3b8;
+            cursor:not-allowed;
         }
         
         .search-box {
