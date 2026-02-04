@@ -1,658 +1,258 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>学习中文词汇网站</title>
-    
-    <!-- Firebase SDK - Multi Source -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    
-    <!-- Backup CDN -->
-    <script>
-        window.firebaseLoaded = false;
-        
-        // Cek setelah 3 detik
-        setTimeout(function() {
-            if (typeof firebase === 'undefined' || typeof firebase.initializeApp === 'undefined') {
-                console.log("Firebase gstatic gagal, loading dari CDNJS...");
-                loadFirebaseFromCDNJS();
-            } else {
-                window.firebaseLoaded = true;
-                console.log("✅ Firebase SDK loaded from gstatic");
-            }
-        }, 3000);
-        
-        function loadFirebaseFromCDNJS() {
-            // Load dari CDNJS sebagai backup
-            var script1 = document.createElement('script');
-            script1.src = 'https://cdnjs.cloudflare.com/ajax/libs/firebase/8.10.0/firebase-app.min.js';
-            script1.onload = function() {
-                console.log("✅ firebase-app loaded from CDNJS");
-                var script2 = document.createElement('script');
-                script2.src = 'https://cdnjs.cloudflare.com/ajax/libs/firebase/8.10.0/firebase-firestore.min.js';
-                script2.onload = function() {
-                    console.log("✅ firebase-firestore loaded from CDNJS");
-                    window.firebaseLoaded = true;
-                    if (window.firebaseReadyCallback) {
-                        window.firebaseReadyCallback();
-                    }
-                };
-                document.head.appendChild(script2);
-            };
-            document.head.appendChild(script1);
-        }
-    </script>
-    
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-             background:
-            linear-gradient( rgba(2,6,23,0.5), rgba(2,6,23,0.5)),
-            url("jonny-gios-2vVhfhbj5-s-unsplash.jpg");
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
-            color: #e5e7eb;
-    );
-    background-size: 400% 400%;
-    animation: aurora 15s ease infinite;
-    color: #e5e7eb;;
-            @keyframes aurora {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>学习中文词汇网站</title>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+<style>
+
+/* RESET */
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Segoe UI, Tahoma, sans-serif;
 }
 
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            background: transparent;
-        }
-        
-        header {
-            background-color: linear-gradient(135deg, #020617, #0f172a, #1e293b);
-            color: #ffffff;
-            padding: 60px 20px;
-            text-align: center;
-            border-radius: 8px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        
-        h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-        }
-        
-        .subtitle {
-            color:#cbd5f5;
-            font-size: 1.2rem;
-            opacity: 0.9;
-        }
-        
-        .main-content {
-            display: flex;
-            gap: 30px;
-            align-items: flex-start;
-        }
-        
-        .input-section, .vocab-list {
-            flex: 1;
-            min-width: 300px;
-            background: rgba(2,6,23,0.55);   /* transparan */
-            backdrop-filter: blur(12px);     /* efek kaca */
-            -webkit-backdrop-filter: blur(12px);
-            color:#e5e7eb;
-            border-radius:14px;
-            box-shadow:0 0 40px rgba(59,130,246,0.25);
-            border:1px solid rgba(255,255,255,0.1);
-            
-            /* Tambahan agar bisa scroll */
-            max-height: 600px;
-            overflow-y: auto;
-            color:#25daeb;
-        }
-        
-        h2 {
-            color: #60a5fa;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #f0f0f0;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 8px;  
-            color:#cbd5f5;
-            font-weight:600;
-        }
-        
-        input, textarea {
-            width:100%;
-            padding:12px;
-            background:#020617;
-            color:#e5e7eb;
-            border:1px solid #1e293b;
-            border-radius:10px;
-            font-size:1rem;
-        }
-        
-       button{
-            background: linear-gradient(90deg,#2563eb,#3b82f6);
-            color:white;
-            border:none;
-            padding:12px 20px;
-            border-radius:10px;
-            font-weight:600;
-            cursor:pointer;
-            transition:0.3s;
+/* BACKGROUND */
+body{
+background:
+linear-gradient(rgba(2,6,23,0.6),rgba(2,6,23,0.6)),
+url("jonny-gios-2vVhfhbj5-s-unsplash.jpg");
+background-size:cover;
+background-position:center;
+background-attachment:fixed;
+color:#e5e7eb;
 }
 
-        button:hover{
-            background: linear-gradient(90deg,#1e40af,#2563eb);
-            transform: translateY(-1px);
-            
-        button:active{
-            transform: translateY(2px);
-            box-shadow: inset 0 3px 6px rgba(0,0,0,0.4);
+/* CONTAINER */
+.container{
+max-width:1200px;
+margin:auto;
+padding:40px 20px;
 }
 
-        /* Saat disabled */
-        button:disabled{
-            background:#334155;
-            color:#94a3b8;
-            cursor:not-allowed;
-        }
-        
-        .search-box {
-            background:#020617;
-            color:#e5e7eb;
-            border:1px solid #1e293b;
-        }
-        
-        .vocab-item:hover{
-            ransform: translateY(-4px);
-            transition: 0.3s;
-            box-shadow:0 10px 25px rgba(37,99,235,0.4);
-            background:#020617;
-            color:#e5e7eb;
-            padding: 15px;
-            margin-bottom: 15px;
-            border-radius: 6px;
-            border-left: 4px solid #c62828;
-            position: relative;
-        }
-        /* Dark Scrollbar */
-::-webkit-scrollbar{
-    width:8px;
+/* HEADER */
+header{
+text-align:center;
+margin-bottom:40px;
 }
-::-webkit-scrollbar-track{
-    background:#020617;
+
+h1{
+font-size:2.5rem;
+margin-bottom:10px;
 }
-::-webkit-scrollbar-thumb{
-    background:#2563eb;
-    border-radius:10px;
-        
-        .vocab-chinese {
-            font-size: 1.8rem;
-            margin-bottom: 5px;
-        }
-        
-        .vocab-pinyin {
-            color: #666;
-            margin-bottom: 5px;
-        }
-        
-        .vocab-meaning {
-            font-weight: 600;
-        }
-        
-        .vocab-example {
-            margin-top: 8px;
-            font-style: italic;
-            color: #555;
-        }
-        
-        .delete-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background-color: #2563eb;
-            padding: 5px 10px;
-            font-size: 0.9rem;
-            border-radius: 4px;
-        }
-        
-        .delete-btn:hover {
-            background-color: #d32f2f;
-        }
-        
-        .empty-message {
-            text-align: center;
-            color: #888;
-            padding: 20px;
-        }
-        
-        footer {
-            text-align: center;
-            margin-top: 40px;
-            padding: 20px;
-            color: #666;
-        }
-        
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: #666;
-        }
-        
-        .status-box {
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 5px;
-            text-align: center;
-        }
-        
-        .status-success {
-            background: rgba(34,197,94,0.15);
-            color: #22c55e;
-            border: 1px solid rgba(34,197,94,0.4);
-        }
-        
-        .status-error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        
-        .status-info {
-            background-color: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
-        }
-        
-        @media (max-width: 768px) {
-            .main-content {
-                flex-direction: column;
-            }
-        }
-    </style>
+
+.subtitle{
+color:#93c5fd;
+}
+
+/* STATUS */
+.status-box{
+margin-bottom:20px;
+padding:10px;
+border-radius:8px;
+background:rgba(34,197,94,0.15);
+color:#22c55e;
+text-align:center;
+}
+
+/* LAYOUT */
+.main-content{
+display:flex;
+gap:30px;
+align-items:flex-start;
+flex-wrap:wrap;
+}
+
+/* PANELS */
+.input-section,
+.vocab-list{
+flex:1;
+min-width:300px;
+background:rgba(2,6,23,0.6);
+backdrop-filter:blur(10px);
+border-radius:15px;
+padding:25px;
+border:1px solid rgba(255,255,255,0.1);
+box-shadow:0 0 40px rgba(59,130,246,0.25);
+max-height:600px;
+overflow-y:auto;
+}
+
+/* TITLES */
+h2{
+color:#60a5fa;
+margin-bottom:15px;
+border-bottom:1px solid rgba(255,255,255,0.2);
+padding-bottom:5px;
+}
+
+/* FORM */
+label{
+display:block;
+margin-top:15px;
+margin-bottom:5px;
+}
+
+input,textarea{
+width:100%;
+padding:10px;
+background:#020617;
+border:1px solid #1e293b;
+border-radius:8px;
+color:white;
+}
+
+textarea{resize:vertical}
+
+/* BUTTON */
+button{
+margin-top:15px;
+background:linear-gradient(90deg,#2563eb,#3b82f6);
+border:none;
+color:white;
+padding:12px;
+border-radius:8px;
+cursor:pointer;
+}
+
+button:hover{
+background:linear-gradient(90deg,#1e40af,#2563eb);
+}
+
+/* SEARCH */
+.search-box input{
+margin-bottom:15px;
+}
+
+/* VOCAB ITEM */
+.vocab-item{
+background:#020617;
+padding:15px;
+border-radius:10px;
+margin-bottom:15px;
+border-left:4px solid #3b82f6;
+}
+
+.vocab-item:hover{
+transform:translateY(-3px);
+box-shadow:0 0 20px rgba(59,130,246,0.4);
+}
+
+.vocab-chinese{
+font-size:1.6rem;
+color:#7dd3fc;
+}
+
+.vocab-pinyin{
+color:#cbd5f5;
+}
+
+.vocab-meaning{
+font-weight:bold;
+}
+
+.delete-btn{
+background:#2563eb;
+border:none;
+padding:5px 10px;
+border-radius:6px;
+color:white;
+float:right;
+cursor:pointer;
+}
+
+.delete-btn:hover{
+background:#dc2626;
+}
+
+/* FOOTER */
+footer{
+text-align:center;
+margin-top:40px;
+opacity:0.7;
+}
+
+/* MOBILE */
+@media(max-width:768px){
+.main-content{
+flex-direction:column;
+}
+}
+
+</style>
 </head>
-<body>
-    <div class="main-content">
-        <header>
-            <h1>周庆祥与温菲琳学习中文词汇网站</h1>
-            <p class="subtitle">容易增加与学习中文词汇 - 🔥 Data Tersimpan di Firebase</p>
-            <p style="margin-top: 10px; font-size: 0.9rem; background-color: rgba(255,255,255,0.2); padding: 5px; border-radius: 4px;">
-                Data sekarang bisa diakses dari mana saja! 🚀
-            </p>
-        </header>
-        
-        <!-- Status Display -->
-        <div id="status" class="status-box status-info">
-            🔄 Memuat Firebase SDK...
-        </div>
-        
-        <div class="main-content">
-            <section class="input-section">
-                <h2>增加新词汇</h2>
-                <form id="vocab-form">
-                    <div class="form-group">
-                        <label for="chinese">词汇 (Kata)</label>
-                        <input type="text" id="chinese" placeholder="Contoh: 你好" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="pinyin">Pinyin</label>
-                        <input type="text" id="pinyin" placeholder="Contoh: nǐ hǎo" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="meaning">翻译印尼语 (Arti Indonesia)</label>
-                        <input type="text" id="meaning" placeholder="Contoh: halo" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="example">Contoh Penggunaan (opsional)</label>
-                        <textarea id="example" placeholder="Contoh: 你好吗？ (nǐ hǎo ma?) - Apa kabar?" rows="3"></textarea>
-                    </div>
-                    
-                    <button type="submit" id="submit-btn" disabled>Loading Firebase...</button>
-                </form>
-            </section>
-            
-            <section class="vocab-list">
-                <h2>Daftar Kosakata</h2>
-                
-                <div class="search-box">
-                    <input type="text" id="search" placeholder="Cari kosakata..." disabled>
-                </div>
-                
-                <div id="vocab-container">
-                    <div class="loading" id="loading-message">
-                        Menunggu Firebase SDK...
-                    </div>
-                    <div class="empty-message" id="empty-message" style="display: none;">
-                        Belum ada kosakata. Silakan tambahkan kosakata baru.
-                    </div>
-                </div>
-            </section>
-        </div>
-        
-        <footer>
-            <p>&copy; 2025 Pembelajaran Kosakata Mandarin. Semua hak dilindungi.</p>
-            <p style="font-size: 0.9rem; margin-top: 5px;">Data tersimpan di Firebase | Dibuat oleh 周庆祥 & 温菲琳</p>
-        </footer>
-    </div>
 
-    <script>
-        // ============================================
-        // 🔥 KONFIGURASI FIREBASE
-        // ============================================
-        const firebaseConfig = {
-            apiKey: "AIzaSyCeQBYt2evJIFkBir5XHd4x4Lldnkvo_Sk",
-            authDomain: "kosakata-mandarin-chou-wen.firebaseapp.com",
-            projectId: "kosakata-mandarin-chou-wen",
-            storageBucket: "kosakata-mandarin-chou-wen.firebasestorage.app",
-            messagingSenderId: "634892121146",
-            appId: "1:634892121146:web:ec0f8a2e769d90fa52f103"
-        };
-        
-        // Global variables
-        let db = null;
-        let vocabCollection = null;
-        let appInitialized = false;
-        
-        // Update status display
-        function updateStatus(message, type = 'info') {
-            const statusEl = document.getElementById('status');
-            if (statusEl) {
-                statusEl.textContent = message;
-                statusEl.className = 'status-box';
-                
-                if (type === 'success') statusEl.classList.add('status-success');
-                else if (type === 'error') statusEl.classList.add('status-error');
-                else if (type === 'info') statusEl.classList.add('status-info');
-                
-                console.log("Status:", message);
-            }
-        }
-        
-        // Initialize Firebase App
-        function initializeFirebaseApp() {
-            try {
-                console.log("Initializing Firebase...");
-                
-                // Check if firebase is available
-                if (typeof firebase === 'undefined') {
-                    updateStatus("❌ Firebase SDK belum tersedia. Cek koneksi internet.", 'error');
-                    return false;
-                }
-                
-                // Check if already initialized
-                if (firebase.apps.length > 0) {
-                    console.log("Firebase already initialized");
-                    db = firebase.firestore();
-                } else {
-                    // Initialize new app
-                    const app = firebase.initializeApp(firebaseConfig);
-                    console.log("✅ Firebase App initialized:", app.name);
-                    db = firebase.firestore();
-                }
-                
-                vocabCollection = db.collection('vocabularies');
-                appInitialized = true;
-                
-                updateStatus("✅ Firebase terhubung! Siap menyimpan data.", 'success');
-                
-                // Enable form
-                document.getElementById('submit-btn').disabled = false;
-                document.getElementById('submit-btn').textContent = 'Simpan Kosakata';
-                document.getElementById('search').disabled = false;
-                
-                // Load initial data
-                loadVocabularies();
-                
-                return true;
-                
-            } catch (error) {
-                console.error("Firebase initialization error:", error);
-                updateStatus(`❌ Error: ${error.message}`, 'error');
-                return false;
-            }
-        }
-        
-        // Wait for Firebase SDK to load
-        function waitForFirebase() {
-            const checkInterval = setInterval(function() {
-                if (window.firebaseLoaded) {
-                    clearInterval(checkInterval);
-                    console.log("Firebase SDK loaded, initializing app...");
-                    initializeFirebaseApp();
-                }
-                
-                // Fallback: langsung coba setelah 5 detik
-            }, 500);
-            
-            // Timeout setelah 10 detik
-            setTimeout(function() {
-                clearInterval(checkInterval);
-                if (!appInitialized) {
-                    console.log("Trying direct initialization...");
-                    if (typeof firebase !== 'undefined') {
-                        initializeFirebaseApp();
-                    } else {
-                        updateStatus("❌ Firebase gagal load. Refresh halaman.", 'error');
-                    }
-                }
-            }, 10000);
-        }
-        
-        // DOM Ready
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log("DOM Content Loaded");
-            
-            // Setup form (akan di-enable setelah Firebase siap)
-            const vocabForm = document.getElementById('vocab-form');
-            if (vocabForm) {
-                vocabForm.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    if (appInitialized) {
-                        saveVocabulary();
-                    } else {
-                        updateStatus("❌ Firebase belum siap. Tunggu sebentar...", 'error');
-                    }
-                });
-            }
-            
-            // Setup search
-            const searchInput = document.getElementById('search');
-            if (searchInput) {
-                searchInput.addEventListener('input', function() {
-                    if (appInitialized) {
-                        searchVocabularies(this.value.toLowerCase());
-                    }
-                });
-            }
-            
-            // Start waiting for Firebase
-            waitForFirebase();
-        });
-        
-        // Save vocabulary function
-        async function saveVocabulary() {
-            if (!appInitialized) {
-                updateStatus("❌ Firebase belum terhubung", 'error');
-                return;
-            }
-            
-            const chinese = document.getElementById('chinese').value.trim();
-            const pinyin = document.getElementById('pinyin').value.trim();
-            const meaning = document.getElementById('meaning').value.trim();
-            const example = document.getElementById('example').value.trim();
-            
-            if (!chinese || !pinyin || !meaning) {
-                updateStatus("❌ Harap isi semua kolom wajib!", 'error');
-                return;
-            }
-            
-            const submitBtn = document.getElementById('submit-btn');
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Menyimpan...';
-            
-            try {
-                const newVocab = {
-                    chinese: chinese,
-                    pinyin: pinyin,
-                    meaning: meaning,
-                    example: example || '',
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    addedBy: 'User'
-                };
-                
-                const docRef = await vocabCollection.add(newVocab);
-                console.log("✅ Saved with ID:", docRef.id);
-                
-                updateStatus("✅ Kosakata berhasil disimpan!", 'success');
-                
-                // Reset form
-                document.getElementById('vocab-form').reset();
-                
-                // Reload data
-                loadVocabularies();
-                
-            } catch (error) {
-                console.error("❌ Save error:", error);
-                updateStatus(`❌ Gagal menyimpan: ${error.message}`, 'error');
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Simpan Kosakata';
-            }
-        }
-        
-        // Load vocabularies
-        async function loadVocabularies() {
-            if (!appInitialized) return;
-            
-            const loadingMessage = document.getElementById('loading-message');
-            const emptyMessage = document.getElementById('empty-message');
-            const vocabContainer = document.getElementById('vocab-container');
-            
-            try {
-                loadingMessage.style.display = 'block';
-                emptyMessage.style.display = 'none';
-                
-                const snapshot = await vocabCollection.orderBy('createdAt', 'desc').get();
-                
-                if (snapshot.empty) {
-                    loadingMessage.style.display = 'none';
-                    emptyMessage.style.display = 'block';
-                    return;
-                }
-                
-                // Clear container
-                vocabContainer.innerHTML = '';
-                
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    
-                    let createdAt = 'Tanpa tanggal';
-                    if (data.createdAt && data.createdAt.toDate) {
-                        createdAt = data.createdAt.toDate().toLocaleDateString('id-ID');
-                    }
-                    
-                    const vocabItem = document.createElement('div');
-                    vocabItem.className = 'vocab-item';
-                    vocabItem.innerHTML = `
-                        <button class="delete-btn" onclick="deleteVocabulary('${doc.id}')">Hapus</button>
-                        <div class="vocab-chinese">${data.chinese}</div>
-                        <div class="vocab-pinyin">${data.pinyin}</div>
-                        <div class="vocab-meaning">${data.meaning}</div>
-                        ${data.example ? `<div class="vocab-example">${data.example}</div>` : ''}
-                        <div style="font-size: 0.8rem; color: #999; margin-top: 8px;">
-                            Ditambahkan: ${createdAt}
-                        </div>
-                    `;
-                    
-                    vocabContainer.appendChild(vocabItem);
-                });
-                
-                loadingMessage.style.display = 'none';
-                
-            } catch (error) {
-                console.error("❌ Load error:", error);
-                loadingMessage.innerHTML = `❌ Error: ${error.message}`;
-            }
-        }
-        
-        // Delete vocabulary
-        async function deleteVocabulary(id) {
-            if (!appInitialized) return;
-            
-            if (!confirm('Hapus kosakata ini?')) return;
-            
-            try {
-                await vocabCollection.doc(id).delete();
-                updateStatus("✅ Kosakata dihapus", 'success');
-                loadVocabularies();
-            } catch (error) {
-                updateStatus(`❌ Gagal menghapus: ${error.message}`, 'error');
-            }
-        }
-        
-        // Search function
-        function searchVocabularies(searchTerm) {
-            const vocabItems = document.querySelectorAll('.vocab-item');
-            let foundCount = 0;
-            
-            vocabItems.forEach(item => {
-                const text = item.textContent.toLowerCase();
-                if (text.includes(searchTerm)) {
-                    item.style.display = 'block';
-                    foundCount++;
-                } else {
-                    item.style.display = 'none';
-                }
-            });
-            
-            const emptyMessage = document.getElementById('empty-message');
-            if (foundCount === 0 && searchTerm) {
-                emptyMessage.textContent = `Tidak ditemukan: "${searchTerm}"`;
-                emptyMessage.style.display = 'block';
-            }
-        }
-        
-        // Global functions
-        window.deleteVocabulary = deleteVocabulary;
-        window.forceInitialize = function() {
-            if (typeof firebase !== 'undefined') {
-                initializeFirebaseApp();
-            } else {
-                alert("Firebase SDK masih belum tersedia. Refresh halaman.");
-            }
-        };
-        
-        // Callback when Firebase is ready
-        window.firebaseReadyCallback = function() {
-            console.log("Firebase ready callback called");
-            initializeFirebaseApp();
-        };
-    </script>
-</body>
-</html>
+<body>
+
+<div class="container">
+
+<header>
+<h1>周庆祥与温菲琳学习中文词汇网站</h1>
+<p class="subtitle">容易增加与学习中文词汇 - 🔥 Data Tersimpan di Firebase</p>
+</header>
+
+<div class="status-box">
+✅ Firebase terhubung! Siap menyimpan data.
+</div>
+
+<div class="main-content">
+
+<!-- INPUT -->
+<div class="input-section">
+<h2>增加新词汇</h2>
+
+<label>Kata</label>
+<input id="chinese">
+
+<label>Pinyin</label>
+<input id="pinyin">
+
+<label>Arti Indonesia</label>
+<input id="meaning">
+
+<label>Contoh</label>
+<textarea id="example"></textarea>
+
+<button onclick="saveVocabulary()">Simpan Kosakata</button>
+</div>
+
+<!-- LIST -->
+<div class="vocab-list">
+<h2>Daftar Kosakata</h2>
+
+<div class="search-box">
+<input id="search" placeholder="Cari kosakata..." oninput="searchVocab()">
+</div>
+
+<div id="vocab-container"></div>
+</div>
+
+</div>
+
+<footer>
+© 2025 Pembelajaran Kosakata Mandarin
+</footer>
+
+</div>
+
+<script>
+
+const firebaseConfig = {
+apiKey: "AIzaSyCeQBYt2evJIFkBir5XHd4x4Lldnkvo_Sk",
+authDomain: "kosakata-mandarin-chou-wen.firebaseapp.com",
+projectId: "kosakata-mandarin-chou-wen"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const col = db.collection("vocabularies");
+
+/* SAVE */
+fun
