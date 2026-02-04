@@ -54,9 +54,22 @@
         }
         
         body {
-            background-color: #0f172a;
-            color: #e5e7eb;
-            line-height: 1.6;
+            background: linear-gradient(
+            135deg,
+            #020617,
+            #0f172a,
+            #1e293b,
+            #020617
+    );
+    background-size: 400% 400%;
+    animation: aurora 15s ease infinite;
+    color: #e5e7eb;;
+            @keyframes aurora {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
         }
         
         .container {
@@ -105,6 +118,7 @@
             /* Tambahan agar bisa scroll */
             max-height: 600px;
             overflow-y: auto;
+            color:#25daeb;
         }
         
         h2 {
